@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-6">
+    <h1 class="text-2xl font-bold mb-6">Add New Farm</h1>
+    
+    <form method="post">
+        {% csrf_token %}
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            {% for field in form %}
+            <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2" for="{{ field.id_for_label }}">
+                    {{ field.label }}
+                </label>
+                {{ field }}
+                {% if field.errors %}
+                <p class="text-red-500 text-xs italic mt-1">{{ field.errors|join:", " }}</p>
+                {% endif %}
+                {% if field.help_text %}
+                <p class="text-gray-600 text-xs italic mt-1">{{ field.help_text }}</p>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="flex justify-end space-x-3">
+            <a href="{% url 'farms:list' %}" class="btn-gray">Cancel</a>
+            <button type="submit" class="btn-indigo">Save Farm</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    // Initialize map for location selection
+    function initMap() {
+        const map = new google.maps.Map(document.getElementById('map-picker'), {
+            center: { lat: 23.6850, lng: 90.3563 }, // Default to Bangladesh
+            zoom: 7
+        });
+
+        const marker = new google.maps.Marker({
+            map: map,
+            draggable: true
+        });
+
+        map.addListener('click', (e) => {
+            marker.setPosition(e.latLng);
+            document.getElementById('id_latitude').value = e.latLng.lat();
+            document.getElementById('id_longitude').value = e.latLng.lng();
+        });
+    }
+</script>
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initMap"></script>
+{% endblock %}
