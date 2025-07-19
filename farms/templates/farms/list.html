@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold">Your Farms</h1>
+        <a href="{% url 'farms:add' %}" class="btn-indigo">
+            + Add New Farm
+        </a>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left">Name</th>
+                    <th class="px-6 py-3 text-left">Location</th>
+                    <th class="px-6 py-3 text-left">Size</th>
+                    <th class="px-6 py-3 text-left">Crops</th>
+                    <th class="px-6 py-3 text-left">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for farm in farms %}
+                <tr>
+                    <td class="px-6 py-4">{{ farm.name }}</td>
+                    <td class="px-6 py-4">{{ farm.address|truncatechars:30 }}</td>
+                    <td class="px-6 py-4">{{ farm.size }} acres</td>
+                    <td class="px-6 py-4">{{ farm.crops.count }} crops</td>
+                    <td class="px-6 py-4">
+                        <a href="{% url 'farms:detail' farm.id %}" class="text-indigo-600 hover:text-indigo-900 mr-3">View</a>
+                        <a href="{% url 'farms:add_crop' farm.id %}" class="text-green-600 hover:text-green-900">Add Crop</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="px-6 py-4 text-center text-gray-500">
+                        No farms found. <a href="{% url 'farms:add' %}" class="text-indigo-600">Add your first farm</a>.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

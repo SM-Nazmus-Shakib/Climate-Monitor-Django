@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4">
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-2xl font-bold">{{ farm.name }}</h1>
+            <p class="text-gray-600">{{ farm.address }}</p>
+        </div>
+        <a href="{% url 'farms:add_crop' farm.id %}" class="btn-green">
+            + Add Crop
+        </a>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white rounded-lg shadow-md p-4">
+            <h3 class="font-semibold mb-2">Farm Details</h3>
+            <p><span class="text-gray-600">Size:</span> {{ farm.size }} acres</p>
+            <p><span class="text-gray-600">Soil Type:</span> {{ farm.soil_type }}</p>
+            <p><span class="text-gray-600">Coordinates:</span> {{ farm.latitude|floatformat:4 }}, {{ farm.longitude|floatformat:4 }}</p>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-md p-4">
+            <h3 class="font-semibold mb-2">Weather</h3>
+            {% if weather_data %}
+                <div class="space-y-2">
+                    {% for data in weather_data %}
+                    <div class="flex items-center">
+                        <i class="wi wi-{{ data.icon }} text-xl mr-2"></i>
+                        <span>{{ data.temperature }}°C - {{ data.conditions }}</span>
+                        <span class="text-gray-500 text-sm ml-auto">{{ data.recorded_at|date:"M d, H:i" }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-gray-500">No weather data available</p>
+            {% endif %}
+        </div>
+
+        <div class="bg-white rounded-lg shadow-md p-4">
+            <h3 class="font-semibold mb-2">Quick Actions</h3>
+            <a href="#" class="block py-2 text-indigo-600 hover:text-indigo-800">View on Map</a>
+            <a href="#" class="block py-2 text-indigo-600 hover:text-indigo-800">Generate Report</a>
+            <a href="#" class="block py-2 text-indigo-600 hover:text-indigo-800">Edit Farm Details</a>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-md p-4">
+        <h3 class="font-semibold mb-4">Current Crops</h3>
+        
+        {% if crops %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead>
+                    <tr>
+                        <th class="px-4 py-2 text-left">Crop Type</th>
+                        <th class="px-4 py-2 text-left">Variety</th>
+                        <th class="px-4 py-2 text-left">Planted</th>
+                        <th class="px-4 py-2 text-left">Harvest</th>
+                        <th class="px-4 py-2 text-left">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for crop in crops %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-2">{{ crop.get_crop_type_display }}</td>
+                        <td class="px-4 py-2">{{ crop.variety }}</td>
+                        <td class="px-4 py-2">{{ crop.planting_date|date:"M d, Y" }}</td>
+                        <td class="px-4 py-2">{{ crop.expected_harvest_date|date:"M d, Y" }}</td>
+                        <td class="px-4 py-2">
+                            <span class="px-2 py-1 text-xs rounded-full 
+                                {% if crop.current_status == 'Healthy' %}bg-green-100 text-green-800
+                                {% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                                {{ crop.current_status }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-gray-500">No crops found for this farm.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
