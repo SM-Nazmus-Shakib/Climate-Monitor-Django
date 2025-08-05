@@ -1,9 +1,10 @@
 from django.urls import path
-from .views import weather_dashboard, weather_forecast
+from . import views
 
 app_name = 'weather'
 
 urlpatterns = [
-    path('dashboard/', weather_dashboard, name='dashboard'),
-    path('forecast/<int:farm_id>/', weather_forecast, name='forecast'),
+    path('dashboard/', views.dashboard, name='dashboard'),
+    path('alerts/', views.alerts, name='alerts'),
+    path('api/weather/', views.get_weather_api, name='weather_api'),
 ]

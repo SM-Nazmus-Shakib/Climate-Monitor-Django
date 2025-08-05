@@ -1,32 +1,20 @@
 from django import forms
-from .models import Farm, Crop
+from .models import Farm, CropMonitoring
 
 class FarmForm(forms.ModelForm):
     class Meta:
         model = Farm
-        fields = ['name', 'address', 'latitude', 'longitude', 'size', 'soil_type']
-        widgets = {
-            'latitude': forms.HiddenInput(),
-            'longitude': forms.HiddenInput(),
-        }
-
-    def __init__(self, *args, **kwargs):
-        self.user = kwargs.pop('user', None)
-        super().__init__(*args, **kwargs)
-        
-    def save(self, commit=True):
-        farm = super().save(commit=False)
-        if self.user:
-            farm.owner = self.user
-        if commit:
-            farm.save()
-        return farm
-
-class CropForm(forms.ModelForm):
-    class Meta:
-        model = Crop
-        fields = ['crop_type', 'variety', 'planting_date', 'expected_harvest_date', 'current_status', 'notes']
+        fields = ['name', 'location', 'latitude', 'longitude', 'area_acres', 
+                 'crop_type', 'planting_date', 'expected_harvest_date']
         widgets = {
             'planting_date': forms.DateInput(attrs={'type': 'date'}),
             'expected_harvest_date': forms.DateInput(attrs={'type': 'date'}),
+        }
+
+class CropMonitoringForm(forms.ModelForm):
+    class Meta:
+        model = CropMonitoring
+        fields = ['health_status', 'notes']
+        widgets = {
+            'notes': forms.Textarea(attrs={'rows': 4}),
         }

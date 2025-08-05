@@ -1,4 +1,374 @@
-.lal-bg{
-    background-color: red;
-    color: white;
+/* Custom styles for Climate Monitor */
+
+/* Navigation dropdown hover effect */
+.group:hover .group-hover\:block {
+    display: block !important;
 }
+
+/* Form styling improvements */
+.form-input {
+    @apply appearance-none border border-gray-300 rounded-md px-3 py-2 text-sm leading-tight;
+}
+
+.form-input:focus {
+    @apply outline-none border-green-500 ring-2 ring-green-200;
+}
+
+/* Button hover effects */
+.btn-primary {
+    @apply bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded transition duration-200;
+}
+
+.btn-secondary {
+    @apply bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded transition duration-200;
+}
+
+/* Alert styles */
+.alert {
+    @apply px-4 py-3 rounded-md mb-4;
+}
+
+.alert-success {
+    @apply bg-green-100 border border-green-400 text-green-700;
+}
+
+.alert-error {
+    @apply bg-red-100 border border-red-400 text-red-700;
+}
+
+.alert-warning {
+    @apply bg-yellow-100 border border-yellow-400 text-yellow-700;
+}
+
+/* Card hover effects */
+.card {
+    @apply bg-white shadow-md rounded-lg transition-shadow duration-200;
+}
+
+.card:hover {
+    @apply shadow-lg;
+}
+
+/* Weather status indicators */
+.weather-excellent { @apply text-green-600; }
+.weather-good { @apply text-blue-600; }
+.weather-fair { @apply text-yellow-600; }
+.weather-poor { @apply text-orange-600; }
+.weather-critical { @apply text-red-600; }
+
+/* Crop health indicators */
+.health-excellent { @apply bg-green-100 text-green-800; }
+.health-good { @apply bg-blue-100 text-blue-800; }
+.health-fair { @apply bg-yellow-100 text-yellow-800; }
+.health-poor { @apply bg-orange-100 text-orange-800; }
+.health-critical { @apply bg-red-100 text-red-800; }
+
+/* Loading spinner */
+.spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Mobile responsiveness improvements */
+@media (max-width: 640px) {
+    .mobile-stack {
+        @apply flex-col space-y-2;
+    }
+    
+    .mobile-full {
+        @apply w-full;
+    }
+}
+
+/* static/js/main.js */
+// Main JavaScript functionality for Climate Monitor
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize all interactive components
+    initializeDropdowns();
+    initializeModals();
+    initializeFormValidation();
+    initializeWeatherUpdates();
+});
+
+// Dropdown menu functionality
+function initializeDropdowns() {
+    const dropdowns = document.querySelectorAll('.dropdown');
+    
+    dropdowns.forEach(dropdown => {
+        const trigger = dropdown.querySelector('.dropdown-trigger');
+        const menu = dropdown.querySelector('.dropdown-menu');
+        
+        if (trigger && menu) {
+            trigger.addEventListener('click', function(e) {
+                e.preventDefault();
+                menu.classList.toggle('hidden');
+            });
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!dropdown.contains(e.target)) {
+                    menu.classList.add('hidden');
+                }
+            });
+        }
+    });
+}
+
+// Modal functionality
+function initializeModals() {
+    const modals = document.querySelectorAll('.modal');
+    
+    modals.forEach(modal => {
+        const closeButtons = modal.querySelectorAll('.modal-close');
+        
+        closeButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                closeModal(modal.id);
+            });
+        });
+        
+        // Close modal when clicking on backdrop
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                closeModal(modal.id);
+            }
+        });
+    });
+}
+
+function openModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.add('hidden');
+        document.body.style.overflow = 'auto';
+    }
+}
+
+// Form validation
+function initializeFormValidation() {
+    const forms = document.querySelectorAll('form[data-validate]');
+    
+    forms.forEach(form => {
+        form.addEventListener('submit', function(e) {
+            if (!validateForm(form)) {
+                e.preventDefault();
+            }
+        });
+        
+        // Real-time validation for inputs
+        const inputs = form.querySelectorAll('input, select, textarea');
+        inputs.forEach(input => {
+            input.addEventListener('blur', function() {
+                validateField(input);
+            });
+        });
+    });
+}
+
+function validateForm(form) {
+    let isValid = true;
+    const inputs = form.querySelectorAll('input[required], select[required], textarea[required]');
+    
+    inputs.forEach(input => {
+        if (!validateField(input)) {
+            isValid = false;
+        }
+    });
+    
+    return isValid;
+}
+
+function validateField(field) {
+    const value = field.value.trim();
+    const fieldType = field.type;
+    let isValid = true;
+    let errorMessage = '';
+    
+    // Remove existing error styling
+    field.classList.remove('border-red-500');
+    const existingError = field.parentNode.querySelector('.field-error');
+    if (existingError) {
+        existingError.remove();
+    }
+    
+    // Required field validation
+    if (field.hasAttribute('required') && !value) {
+        isValid = false;
+        errorMessage = 'This field is required.';
+    }
+    
+    // Email validation
+    if (fieldType === 'email' && value) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(value)) {
+            isValid = false;
+            errorMessage = 'Please enter a valid email address.';
+        }
+    }
+    
+    // Number validation
+    if (fieldType === 'number' && value) {
+        if (isNaN(value) || parseFloat(value) < 0) {
+            isValid = false;
+            errorMessage = 'Please enter a valid positive number.';
+        }
+    }
+    
+    // Show error if validation failed
+    if (!isValid) {
+        field.classList.add('border-red-500');
+        const errorElement = document.createElement('p');
+        errorElement.className = 'field-error text-sm text-red-600 mt-1';
+        errorElement.textContent = errorMessage;
+        field.parentNode.appendChild(errorElement);
+    }
+    
+    return isValid;
+}
+
+// Weather updates functionality
+function initializeWeatherUpdates() {
+    // Auto-refresh weather data every 30 minutes
+    setInterval(refreshWeatherData, 30 * 60 * 1000);
+    
+    // Check for weather alerts on page load
+    checkWeatherAlerts();
+}
+
+function refreshWeatherData() {
+    // This would typically make AJAX calls to update weather information
+    console.log('Refreshing weather data...');
+    
+    // Example: Update weather widgets
+    const weatherWidgets = document.querySelectorAll('.weather-widget');
+    weatherWidgets.forEach(widget => {
+        const farmId = widget.dataset.farmId;
+        if (farmId) {
+            updateWeatherWidget(farmId, widget);
+        }
+    });
+}
+
+function updateWeatherWidget(farmId, widget) {
+    // Placeholder for weather update logic
+    fetch(`/weather/api/weather/?farm_id=${farmId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.current) {
+                updateWidgetContent(widget, data.current);
+            }
+        })
+        .catch(error => {
+            console.error('Error updating weather:', error);
+        });
+}
+
+function updateWidgetContent(widget, weatherData) {
+    // Update temperature
+    const tempElement = widget.querySelector('.temperature');
+    if (tempElement && weatherData.temperature) {
+        tempElement.textContent = `${weatherData.temperature}°C`;
+    }
+    
+    // Update humidity
+    const humidityElement = widget.querySelector('.humidity');
+    if (humidityElement && weatherData.humidity) {
+        humidityElement.textContent = `${weatherData.humidity}%`;
+    }
+    
+    // Update description
+    const descElement = widget.querySelector('.description');
+    if (descElement && weatherData.description) {
+        descElement.textContent = weatherData.description;
+    }
+}
+
+function checkWeatherAlerts() {
+    fetch('/weather/alerts/api/')
+        .then(response => response.json())
+        .then(data => {
+            if (data.alerts && data.alerts.length > 0) {
+                showWeatherAlerts(data.alerts);
+            }
+        })
+        .catch(error => {
+            console.error('Error checking weather alerts:', error);
+        });
+}
+
+function showWeatherAlerts(alerts) {
+    const alertContainer = document.getElementById('weather-alerts');
+    if (!alertContainer) return;
+    
+    alertContainer.innerHTML = '';
+    
+    alerts.forEach(alert => {
+        const alertElement = document.createElement('div');
+        alertElement.className = `alert alert-${alert.severity} mb-4`;
+        alertElement.innerHTML = `
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium">${alert.title}</h3>
+                    <p class="text-sm mt-1">${alert.description}</p>
+                    <p class="text-xs mt-2">${alert.location} • ${alert.severity} severity</p>
+                </div>
+            </div>
+        `;
+        alertContainer.appendChild(alertElement);
+    });
+}
+
+// Utility functions
+function showNotification(message, type = 'success') {
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 p-4 rounded-md shadow-lg z-50 alert alert-${type}`;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        notification.remove();
+    }, 5000);
+}
+
+function formatDate(date) {
+    return new Date(date).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+    });
+}
+
+function formatCurrency(amount) {
+    return new Intl.NumberFormat('en-BD', {
+        style: 'currency',
+        currency: 'BDT'
+    }).format(amount);
+}
+
+// Export functions for global use
+window.Climate = {
+    openModal,
+    closeModal,
+    showNotification,
+    formatDate,
+    formatCurrency,
+    refreshWeatherData
+};

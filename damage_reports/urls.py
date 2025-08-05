@@ -1,12 +1,11 @@
 from django.urls import path
-from .views import report_list, report_detail, create_report, verify_report
+from . import views
 
-app_name = 'damage_report'
+app_name = 'damage_reports'
 
 urlpatterns = [
-    path('', report_list, name='list'),
-    path('<int:pk>/', report_detail, name='detail'),
-    path('create/', create_report, name='create'),
-    path('create/<int:farm_id>/', create_report, name='create_for_farm'),
-    path('<int:pk>/verify/', verify_report, name='verify'),
+    path('', views.report_list, name='report_list'),
+    path('create/', views.report_create, name='report_create'),
+    path('<int:report_id>/', views.report_detail, name='report_detail'),
+    path('<int:report_id>/edit/', views.report_edit, name='report_edit'),
 ]

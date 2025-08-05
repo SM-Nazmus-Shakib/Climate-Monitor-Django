@@ -1,12 +1,11 @@
-from django.db import models
 from django.contrib.auth.models import AbstractUser
-from django.utils.translation import gettext_lazy as _
+from django.db import models
 
-class User(AbstractUser):
-    phone = models.CharField(max_length=20, blank=True)
-    address = models.TextField(blank=True)
+class CustomUser(AbstractUser):
+    phone_number = models.CharField(max_length=15, blank=True)
+    location = models.CharField(max_length=100, blank=True)
     is_farmer = models.BooleanField(default=True)
-    is_agriculture_officer = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
     
     def __str__(self):
-        return self.get_full_name() or self.username
+        return self.username
