@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+
+{% block title %}Climate Monitor - Agriculture Weather System{% endblock %}
+
+{% block content %}
+<div class="bg-gradient-to-r from-green-400 to-blue-500 text-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        <div class="text-center">
+            <h1 class="text-4xl md:text-6xl font-bold mb-6">
+                Climate Monitor for Agriculture
+            </h1>
+            <p class="text-xl md:text-2xl mb-8 max-w-3xl mx-auto">
+                Free weather monitoring and crop management system designed specifically for farmers in Bangladesh
+            </p>
+            
+            {% if not user.is_authenticated %}
+                <div class="space-x-4">
+                    <a href="{% url 'users:register' %}" class="bg-white text-green-600 px-8 py-3 rounded-lg text-lg font-semibold hover:bg-gray-100 transition">
+                        Get Started Free
+                    </a>
+                    <a href="{% url 'users:login' %}" class="border-2 border-white text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-white hover:text-green-600 transition">
+                        Login
+                    </a>
+                </div>
+            {% else %}
+                <a href="{% url 'farms:dashboard' %}" class="bg-white text-green-600 px-8 py-3 rounded-lg text-lg font-semibold hover:bg-gray-100 transition">
+                    Go to Dashboard
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl font-bold text-gray-900 mb-4">Everything You Need in One Place</h2>
+            <p class="text-lg text-gray-600">Complete agricultural monitoring solution for modern farmers</p>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-8">
+            <div class="text-center p-6 bg-white rounded-lg shadow-md">
+                <div class="text-4xl text-green-600 mb-4">
+                    <i class="fas fa-cloud-sun"></i>
+                </div>
+                <h3 class="text-xl font-semibold mb-2">Weather Monitoring</h3>
+                <p class="text-gray-600">Real-time weather data, forecasts, and alerts for your farm locations.</p>
+            </div>
+
+            <div class="text-center p-6 bg-white rounded-lg shadow-md">
+                <div class="text-4xl text-green-600 mb-4">
+                    <i class="fas fa-seedling"></i>
+                </div>
+                <h3 class="text-xl font-semibold mb-2">Crop Management</h3>
+                <p class="text-gray-600">Track your crops, monitor health, and manage multiple farm locations.</p>
+            </div>
+
+            <div class="text-center p-6 bg-white rounded-lg shadow-md">
+                <div class="text-4xl text-green-600 mb-4">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <h3 class="text-xl font-semibold mb-2">Damage Reports</h3>
+                <p class="text-gray-600">Quick damage assessment and reporting for insurance and government aid.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="bg-gray-100 py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center">
+            <h2 class="text-3xl font-bold text-gray-900 mb-4">Why Choose Climate Monitor?</h2>
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
+                <div class="text-center">
+                    <div class="text-2xl text-green-600 mb-2">
+                        <i class="fas fa-money-bill-slash"></i>
+                    </div>
+                    <h4 class="font-semibold">Completely Free</h4>
+                    <p class="text-sm text-gray-600">No hidden costs or subscriptions</p>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl text-green-600 mb-2">
+                        <i class="fas fa-mobile-alt"></i>
+                    </div>
+                    <h4 class="font-semibold">Mobile Friendly</h4>
+                    <p class="text-sm text-gray-600">Works perfectly on smartphones</p>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl text-green-600 mb-2">
+                        <i class="fas fa-map-marker-alt"></i>
+                    </div>
+                    <h4 class="font-semibold">Bangladesh Focused</h4>
+                    <p class="text-sm text-gray-600">Built for local farmers and conditions</p>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl text-green-600 mb-2">
+                        <i class="fas fa-brain"></i>
+                    </div>
+                    <h4 class="font-semibold">Smart Predictions</h4>
+                    <p class="text-sm text-gray-600">AI-powered weather insights</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

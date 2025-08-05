@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+
+{% block title %}Profile - Climate Monitor{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">My Profile</h1>
+        <p class="text-gray-600">Manage your account information</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Profile Information -->
+        <div class="lg:col-span-2">
+            <div class="bg-white shadow rounded-lg p-6">
+                <h2 class="text-lg font-semibold text-gray-900 mb-6">Account Information</h2>
+                
+                <div class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Username</label>
+                            <p class="mt-1 text-sm text-gray-900">{{ user.phone_number|default:"Not provided" }}</p>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Location</label>
+                            <p class="mt-1 text-sm text-gray-900">{{ user.location|default:"Not provided" }}</p>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Account Type</label>
+                        <p class="mt-1 text-sm text-gray-900">
+                            {% if user.is_farmer %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    <i class="fas fa-seedling mr-1"></i>Farmer
+                                </span>
+                            {% else %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                    User
+                                </span>
+                            {% endif %}
+                        </p>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Member Since</label>
+                        <p class="mt-1 text-sm text-gray-900">{{ user.date_joined|date:"F d, Y" }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Account Statistics -->
+        <div class="space-y-6">
+            <div class="bg-white shadow rounded-lg p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Account Stats</h3>
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-500">Total Farms:</span>
+                        <span class="text-lg font-semibold text-green-600">{{ user.farms.count }}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-500">Damage Reports:</span>
+                        <span class="text-lg font-semibold text-red-600">{{ user.damagereport_set.count }}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-500">Total Area:</span>
+                        <span class="text-lg font-semibold text-blue-600">
+                            {% widthratio user.farms.all|length 1 1 as farm_count %}
+                            {% for farm in user.farms.all %}
+                                {% if forloop.first %}{{ farm.area_acres }}{% else %}+{{ farm.area_acres }}{% endif %}
+                            {% empty %}0{% endfor %} acres
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white shadow rounded-lg p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+                <div class="space-y-3">
+                    <a href="{% url 'farms:farm_create' %}" class="block w-full text-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700">
+                        <i class="fas fa-plus mr-2"></i>Add New Farm
+                    </a>
+                    <a href="{% url 'weather:dashboard' %}" class="block w-full text-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        <i class="fas fa-cloud-sun mr-2"></i>Check Weather
+                    </a>
+                    <a href="{% url 'damage_reports:report_create' %}" class="block w-full text-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>Report Damage
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

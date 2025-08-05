@@ -1,87 +1,214 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
+
+{% block title %}{{ farm.name }} - Climate Monitor{% endblock %}
 
 {% block content %}
-<div class="container mx-auto px-4">
-    <div class="flex justify-between items-center mb-6">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="flex justify-between items-center mb-8">
         <div>
-            <h1 class="text-2xl font-bold">{{ farm.name }}</h1>
-            <p class="text-gray-600">{{ farm.address }}</p>
+            <h1 class="text-3xl font-bold text-gray-900">{{ farm.name }}</h1>
+            <p class="text-gray-600">{{ farm.location }} • {{ farm.crop_type|capfirst }}</p>
         </div>
-        <a href="{% url 'farms:add_crop' farm.id %}" class="btn-green">
-            + Add Crop
-        </a>
+        <div class="flex space-x-3">
+            <a href="{% url 'farms:farm_edit' farm.id %}" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                <i class="fas fa-edit mr-2"></i>Edit Farm
+            </a>
+            <a href="{% url 'farms:farm_list' %}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700">
+                <i class="fas fa-arrow-left mr-2"></i>Back to Farms
+            </a>
+        </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div class="bg-white rounded-lg shadow-md p-4">
-            <h3 class="font-semibold mb-2">Farm Details</h3>
-            <p><span class="text-gray-600">Size:</span> {{ farm.size }} acres</p>
-            <p><span class="text-gray-600">Soil Type:</span> {{ farm.soil_type }}</p>
-            <p><span class="text-gray-600">Coordinates:</span> {{ farm.latitude|floatformat:4 }}, {{ farm.longitude|floatformat:4 }}</p>
-        </div>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Farm Details -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Basic Information -->
+            <div class="bg-white shadow rounded-lg p-6">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">Farm Information</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <span class="text-sm text-gray-500">Area:</span>
+                        <p class="font-medium">{{ farm.area_acres }} acres</p>
+                    </div>
+                    <div>
+                        <span class="text-sm text-gray-500">Crop Type:</span>
+                        <p class="font-medium">{{ farm.get_crop_type_display }}</p>
+                    </div>
+                    <div>
+                        <span class="text-sm text-gray-500">Planting Date:</span>
+                        <p class="font-medium">{{ farm.planting_date }}</p>
+                    </div>
+                    <div>
+                        <span class="text-sm text-gray-500">Expected Harvest:</span>
+                        <p class="font-medium">{{ farm.expected_harvest_date }}</p>
+                    </div>
+                    {% if farm.latitude and farm.longitude %}
+                    <div>
+                        <span class="text-sm text-gray-500">Coordinates:</span>
+                        <p class="font-medium">{{ farm.latitude }}, {{ farm.longitude }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
 
-        <div class="bg-white rounded-lg shadow-md p-4">
-            <h3 class="font-semibold mb-2">Weather</h3>
-            {% if weather_data %}
-                <div class="space-y-2">
-                    {% for data in weather_data %}
-                    <div class="flex items-center">
-                        <i class="wi wi-{{ data.icon }} text-xl mr-2"></i>
-                        <span>{{ data.temperature }}°C - {{ data.conditions }}</span>
-                        <span class="text-gray-500 text-sm ml-auto">{{ data.recorded_at|date:"M d, H:i" }}</span>
+            <!-- Crop Monitoring -->
+            <div class="bg-white shadow rounded-lg p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-semibold text-gray-900">Crop Monitoring</h2>
+                    <button onclick="toggleMonitoringForm()" class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700">
+                        <i class="fas fa-plus mr-2"></i>Add Record
+                    </button>
+                </div>
+
+                <!-- Add Monitoring Form -->
+                <div id="monitoring-form" class="hidden mb-6 p-4 bg-gray-50 rounded-lg">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="{{ form.health_status.id_for_label }}" class="block text-sm font-medium text-gray-700">Health Status</label>
+                                {{ form.health_status }}
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <label for="{{ form.notes.id_for_label }}" class="block text-sm font-medium text-gray-700">Notes</label>
+                            {{ form.notes }}
+                        </div>
+                        <div class="mt-4 flex justify-end space-x-3">
+                            <button type="button" onclick="toggleMonitoringForm()" class="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                                Cancel
+                            </button>
+                            <button type="submit" class="px-3 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-green-600 hover:bg-green-700">
+                                Add Record
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Monitoring Records -->
+                {% if monitoring_records %}
+                <div class="space-y-4">
+                    {% for record in monitoring_records %}
+                    <div class="border-l-4 {% if record.health_status == 'excellent' %}border-green-400 bg-green-50{% elif record.health_status == 'good' %}border-blue-400 bg-blue-50{% elif record.health_status == 'fair' %}border-yellow-400 bg-yellow-50{% elif record.health_status == 'poor' %}border-orange-400 bg-orange-50{% else %}border-red-400 bg-red-50{% endif %} p-4">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {% if record.health_status == 'excellent' %}bg-green-100 text-green-800{% elif record.health_status == 'good' %}bg-blue-100 text-blue-800{% elif record.health_status == 'fair' %}bg-yellow-100 text-yellow-800{% elif record.health_status == 'poor' %}bg-orange-100 text-orange-800{% else %}bg-red-100 text-red-800{% endif %}">
+                                    {{ record.get_health_status_display }}
+                                </span>
+                                {% if record.notes %}
+                                <p class="text-sm text-gray-700 mt-2">{{ record.notes }}</p>
+                                {% endif %}
+                            </div>
+                            <span class="text-xs text-gray-500">{{ record.recorded_at|date:"M d, Y H:i" }}</span>
+                        </div>
                     </div>
                     {% endfor %}
                 </div>
-            {% else %}
-                <p class="text-gray-500">No weather data available</p>
+                {% else %}
+                <p class="text-gray-500 text-center py-4">No monitoring records yet. Add your first record to track crop health.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="space-y-6">
+            <!-- Weather Widget -->
+            {% if farm.latitude and farm.longitude %}
+            <div class="bg-white shadow rounded-lg p-6" id="weather-widget" data-farm-id="{{ farm.id }}">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Current Weather</h3>
+                <div class="text-center">
+                    <button onclick="loadWeatherData({{ farm.latitude }}, {{ farm.longitude }})" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                        <i class="fas fa-sync-alt mr-2"></i>Load Weather
+                    </button>
+                </div>
+                <div id="weather-content" class="hidden mt-4">
+                    <!-- Weather data will be loaded here -->
+                </div>
+            </div>
             {% endif %}
-        </div>
 
-        <div class="bg-white rounded-lg shadow-md p-4">
-            <h3 class="font-semibold mb-2">Quick Actions</h3>
-            <a href="#" class="block py-2 text-indigo-600 hover:text-indigo-800">View on Map</a>
-            <a href="#" class="block py-2 text-indigo-600 hover:text-indigo-800">Generate Report</a>
-            <a href="#" class="block py-2 text-indigo-600 hover:text-indigo-800">Edit Farm Details</a>
+            <!-- Quick Actions -->
+            <div class="bg-white shadow rounded-lg p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+                <div class="space-y-3">
+                    <a href="{% url 'damage_reports:report_create' %}" class="block w-full text-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>Report Damage
+                    </a>
+                    <a href="{% url 'weather:dashboard' %}" class="block w-full text-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        <i class="fas fa-cloud-sun mr-2"></i>Weather Dashboard
+                    </a>
+                </div>
+            </div>
         </div>
-    </div>
-
-    <div class="bg-white rounded-lg shadow-md p-4">
-        <h3 class="font-semibold mb-4">Current Crops</h3>
-        
-        {% if crops %}
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead>
-                    <tr>
-                        <th class="px-4 py-2 text-left">Crop Type</th>
-                        <th class="px-4 py-2 text-left">Variety</th>
-                        <th class="px-4 py-2 text-left">Planted</th>
-                        <th class="px-4 py-2 text-left">Harvest</th>
-                        <th class="px-4 py-2 text-left">Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for crop in crops %}
-                    <tr class="hover:bg-gray-50">
-                        <td class="px-4 py-2">{{ crop.get_crop_type_display }}</td>
-                        <td class="px-4 py-2">{{ crop.variety }}</td>
-                        <td class="px-4 py-2">{{ crop.planting_date|date:"M d, Y" }}</td>
-                        <td class="px-4 py-2">{{ crop.expected_harvest_date|date:"M d, Y" }}</td>
-                        <td class="px-4 py-2">
-                            <span class="px-2 py-1 text-xs rounded-full 
-                                {% if crop.current_status == 'Healthy' %}bg-green-100 text-green-800
-                                {% else %}bg-yellow-100 text-yellow-800{% endif %}">
-                                {{ crop.current_status }}
-                            </span>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        {% else %}
-        <p class="text-gray-500">No crops found for this farm.</p>
-        {% endif %}
     </div>
 </div>
+
+<script>
+function toggleMonitoringForm() {
+    const form = document.getElementById('monitoring-form');
+    form.classList.toggle('hidden');
+}
+
+function loadWeatherData(lat, lon) {
+    const weatherContent = document.getElementById('weather-content');
+    const button = event.target;
+    
+    button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Loading...';
+    button.disabled = true;
+    
+    fetch(`{% url 'weather:weather_api' %}?lat=${lat}&lon=${lon}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.current) {
+                weatherContent.innerHTML = `
+                    <div class="space-y-2">
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">Temperature:</span>
+                            <span class="font-medium text-2xl text-blue-600">${data.current.temperature}°C</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">Humidity:</span>
+                            <span class="font-medium">${data.current.humidity}%</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">Wind:</span>
+                            <span class="font-medium">${data.current.wind_speed} m/s</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">Condition:</span>
+                            <span class="font-medium capitalize">${data.current.description}</span>
+                        </div>
+                    </div>
+                `;
+                weatherContent.classList.remove('hidden');
+            }
+        })
+        .catch(error => {
+            weatherContent.innerHTML = '<p class="text-red-500 text-sm">Failed to load weather data</p>';
+            weatherContent.classList.remove('hidden');
+        })
+        .finally(() => {
+            button.innerHTML = '<i class="fas fa-sync-alt mr-2"></i>Refresh Weather';
+            button.disabled = false;
+        });
+}
+</script>
+
+<style>
+input[type="text"], select, textarea {
+    appearance: none;
+    border-radius: 0.375rem;
+    border: 1px solid #d1d5db;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    width: 100%;
+}
+input:focus, select:focus, textarea:focus {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    border-color: #10b981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+</style>
 {% endblock %}

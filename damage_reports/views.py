@@ -1,68 +1,54 @@
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required, permission_required
-from .models import DamageReport
-from .forms import DamageReportForm, DamageReportVerificationForm
-from farms.models import Farm
+from .models import DamageReport, DamagePhoto
+from .forms import DamageReportForm, DamagePhotoForm
 
 @login_required
 def report_list(request):
-    if request.user.has_perm('damage_report.can_verify_reports'):
-        reports = DamageReport.objects.all().order_by('-date_reported')
-    else:
-        reports = DamageReport.objects.filter(reported_by=request.user).order_by('-date_reported')
-    
-    return render(request, 'damage_report/report_list.html', {'reports': reports})
+    reports = DamageReport.objects.filter(reporter=request.user).order_by('-created_at')
+    context = {'reports': reports}
+    return render(request, 'damage_reports/report_list.html', context)
 
 @login_required
-def report_detail(request, pk):
-    report = get_object_or_404(DamageReport, pk=pk)
+def report_detail(request, report_id):
+    report = get_object_or_404(DamageReport, id=report_id, reporter=request.user)
+    photos = DamagePhoto.objects.filter(damage_report=report)
     
-    if not request.user.has_perm('damage_report.can_verify_reports') and report.reported_by != request.user:
-        messages.error(request, "You don't have permission to view this report.")
-        return redirect('damage_report:list')
-    
-    return render(request, 'damage_report/report_detail.html', {'report': report})
+    context = {
+        'report': report,
+        'photos': photos,
+    }
+    return render(request, 'damage_reports/report_detail.html', context)
 
 @login_required
-def create_report(request, farm_id=None):
-    farms = Farm.objects.filter(owner=request.user)
-    
+def report_create(request):
     if request.method == 'POST':
         form = DamageReportForm(request.user, request.POST)
         if form.is_valid():
             report = form.save(commit=False)
-            report.reported_by = request.user
+            report.reporter = request.user
             report.save()
             messages.success(request, 'Damage report submitted successfully!')
-            return redirect('damage_report:detail', pk=report.pk)
+            return redirect('damage_reports:report_detail', report_id=report.id)
     else:
-        initial = {'farm': farm_id} if farm_id else {}
-        form = DamageReportForm(request.user, initial=initial)
+        form = DamageReportForm(request.user)
     
-    return render(request, 'damage_report/create_report.html', {
-        'form': form,
-        'farms': farms
-    })
+    context = {'form': form, 'title': 'Submit Damage Report'}
+    return render(request, 'damage_reports/report_form.html', context)
 
 @login_required
-@permission_required('damage_report.can_verify_reports', raise_exception=True)
-def verify_report(request, pk):
-    report = get_object_or_404(DamageReport, pk=pk)
+def report_edit(request, report_id):
+    report = get_object_or_404(DamageReport, id=report_id, reporter=request.user)
     
     if request.method == 'POST':
-        form = DamageReportVerificationForm(request.POST, instance=report)
+        form = DamageReportForm(request.user, request.POST, instance=report)
         if form.is_valid():
-            report = form.save(commit=False)
-            report.verified_by = request.user
-            report.is_verified = True
-            report.save()
-            messages.success(request, 'Report verified successfully!')
-            return redirect('damage_report:detail', pk=report.pk)
+            form.save()
+            messages.success(request, 'Damage report updated successfully!')
+            return redirect('damage_reports:report_detail', report_id=report.id)
     else:
-        form = DamageReportVerificationForm(instance=report)
+        form = DamageReportForm(request.user, instance=report)
     
-    return render(request, 'damage_report/verify_report.html', {
-        'form': form,
-        'report': report
-    })
+    context = {'form': form, 'title': 'Edit Damage Report', 'report': report}
+    return render(request, 'damage_reports/report_form.html', context)

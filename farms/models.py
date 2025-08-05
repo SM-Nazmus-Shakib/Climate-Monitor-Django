@@ -4,41 +4,44 @@ from django.contrib.auth import get_user_model
 User = get_user_model()
 
 class Farm(models.Model):
-    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='farms')
-    name = models.CharField(max_length=200)
-    address = models.TextField()
-    latitude = models.FloatField()
-    longitude = models.FloatField()
-    size = models.FloatField(help_text="Size in acres")
-    soil_type = models.CharField(max_length=100)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    def __str__(self):
-        return self.name
-    
-    def get_weather_data(self):
-        """Get latest weather data for this farm"""
-        return self.weather_data.filter(is_forecast=False).order_by('-recorded_at').first()
-
-class Crop(models.Model):
-    CROP_TYPES = [
+    CROP_CHOICES = [
         ('rice', 'Rice'),
         ('wheat', 'Wheat'),
         ('corn', 'Corn'),
         ('potato', 'Potato'),
-        ('vegetables', 'Vegetables'),
-        ('fruits', 'Fruits'),
+        ('tomato', 'Tomato'),
+        ('onion', 'Onion'),
         ('other', 'Other'),
     ]
     
-    farm = models.ForeignKey(Farm, on_delete=models.CASCADE, related_name='crops')
-    crop_type = models.CharField(max_length=50, choices=CROP_TYPES)
-    variety = models.CharField(max_length=100)
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='farms')
+    name = models.CharField(max_length=100)
+    location = models.CharField(max_length=200)
+    latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    area_acres = models.DecimalField(max_digits=10, decimal_places=2)
+    crop_type = models.CharField(max_length=20, choices=CROP_CHOICES)
     planting_date = models.DateField()
     expected_harvest_date = models.DateField()
-    current_status = models.CharField(max_length=100, default='Healthy')
-    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     
     def __str__(self):
-        return f"{self.get_crop_type_display()} ({self.variety}) at {self.farm.name}"
+        return f"{self.name} - {self.owner.username}"
+
+class CropMonitoring(models.Model):
+    HEALTH_CHOICES = [
+        ('excellent', 'Excellent'),
+        ('good', 'Good'),
+        ('fair', 'Fair'),
+        ('poor', 'Poor'),
+        ('critical', 'Critical'),
+    ]
+    
+    farm = models.ForeignKey(Farm, on_delete=models.CASCADE, related_name='monitoring_records')
+    health_status = models.CharField(max_length=20, choices=HEALTH_CHOICES)
+    notes = models.TextField(blank=True)
+    recorded_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"{self.farm.name} - {self.health_status} - {self.recorded_at.date()}"
