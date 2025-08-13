@@ -3,104 +3,236 @@
 {% block title %}Climate Monitor - Agriculture Weather System{% endblock %}
 
 {% block content %}
-<div class="bg-gradient-to-r from-green-400 to-blue-500 text-white">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div class="text-center">
-            <h1 class="text-4xl md:text-6xl font-bold mb-6">
-                Climate Monitor for Agriculture
-            </h1>
-            <p class="text-xl md:text-2xl mb-8 max-w-3xl mx-auto">
-                Free weather monitoring and crop management system designed specifically for farmers in Bangladesh
-            </p>
-            
-            {% if not user.is_authenticated %}
-                <div class="space-x-4">
-                    <a href="{% url 'users:register' %}" class="bg-white text-green-600 px-8 py-3 rounded-lg text-lg font-semibold hover:bg-gray-100 transition">
-                        Get Started Free
-                    </a>
-                    <a href="{% url 'users:login' %}" class="border-2 border-white text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-white hover:text-green-600 transition">
-                        Login
-                    </a>
-                </div>
-            {% else %}
-                <a href="{% url 'farms:dashboard' %}" class="bg-white text-green-600 px-8 py-3 rounded-lg text-lg font-semibold hover:bg-gray-100 transition">
-                    Go to Dashboard
-                </a>
-            {% endif %}
+<div class="bg-gradient-to-r from-green-500 via-teal-500 to-blue-500 animate-gradient-shift text-white">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 py-12">
+    <!-- Chat Bot at Top -->
+    <div class="bg-white/15 backdrop-blur-sm rounded-2xl p-8 max-w-4xl mx-auto border border-white/20">
+      <div class="flex flex-col items-center">
+        <div class="w-16 h-16 bg-white/20 rounded-full flex-center animate-float mb-4">
+          <i class="fas fa-robot text-white text-2xl"></i>
         </div>
+        <h3 class="text-2xl font-bold mb-3">🌾 Ask Your AI Agriculture Assistant</h3>
+        <p class="text-lg opacity-90 mb-6 text-center">
+          Get instant farming advice, weather insights, and crop recommendations
+        </p>
+        
+        <div class="w-full bg-white rounded-xl shadow-lg">
+          <div class="h-48 overflow-y-auto p-4" id="mainChatMessages">
+            <div class="flex items-start space-x-3">
+              <div class="w-8 h-8 bg-green-500 rounded-full flex-center flex-shrink-0">
+                <i class="fas fa-seedling text-white text-sm"></i>
+              </div>
+              <div class="bg-white rounded-lg p-3 shadow-sm max-w-xs">
+                <p class="text-sm text-gray-700">Assalamu Alaikum! Ask me about farming in Bangladesh 🌱</p>
+              </div>
+            </div>
+          </div>
+          
+          <div class="p-4 bg-white border-t">
+            <div class="flex space-x-3">
+              <input 
+                type="text" 
+                id="mainChatInput" 
+                placeholder="Ask about rice cultivation, weather, irrigation..." 
+                class="flex-1 px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-green-500 text-black"
+                maxlength="200"
+              >
+              <button 
+                id="mainChatSend" 
+                class="px-6 py-3 bg-green-500 text-white rounded-full hover:bg-green-600 transition-colors"
+              >
+                <i class="fas fa-paper-plane"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <div class="mt-4 flex flex-wrap justify-center gap-6">
+          <button class="quick-question" data-question="How to grow rice in monsoon season?">
+            Rice cultivation
+          </button>
+          <button class="quick-question" data-question="Best fertilizer for wheat in Bangladesh?">
+            Fertilizer advice
+          </button>
+          <button class="quick-question" data-question="How to prevent rice diseases?">
+            Disease prevention
+          </button>
+          <button class="quick-question" data-question="Irrigation tips for dry season farming?">
+            Irrigation tips
+          </button>
+        </div>
+      </div>
     </div>
+
+    <!-- Dashboard Button Below Chat -->
+    <div class="text-center mt-8">
+      {% if user.is_authenticated %}
+        <a href="{% url 'farms:dashboard' %}" class="inline-block bg-white text-green-600 px-8 py-3 rounded-lg text-lg font-semibold hover:bg-gray-100 transition-transform hover:-translate-y-1">
+          Go to Dashboard
+        </a>
+      {% else %}
+        <div class="space-x-4">
+          <a href="{% url 'users:register' %}" class="inline-block bg-white text-green-600 px-8 py-3 rounded-lg text-lg font-semibold hover:bg-gray-100 transition-transform hover:-translate-y-1">
+            Get Started Free
+          </a>
+          <a href="{% url 'users:login' %}" class="inline-block border-2 border-white text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-white hover:text-green-600 transition-transform hover:-translate-y-1">
+            Login
+          </a>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Main Title Below -->
+    <div class="text-center mt-16">
+      <h1 class="text-4xl md:text-6xl font-bold mb-6">Climate Monitor for Agriculture</h1>
+      <p class="text-xl md:text-2xl max-w-3xl mx-auto">
+        Free weather monitoring and crop management system designed specifically for farmers in Bangladesh
+      </p>
+    </div>
+  </div>
 </div>
 
-<div class="py-16">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center mb-12">
-            <h2 class="text-3xl font-bold text-gray-900 mb-4">Everything You Need in One Place</h2>
-            <p class="text-lg text-gray-600">Complete agricultural monitoring solution for modern farmers</p>
-        </div>
+<!-- Features Section -->
+<div class="py-16 max-w-7xl mx-auto px-4 sm:px-6">
+  <div class="text-center mb-12">
+    <h2 class="text-3xl font-bold text-gray-900 mb-4">Everything You Need in One Place</h2>
+    <p class="text-lg text-gray-600">Complete agricultural monitoring solution</p>
+  </div>
 
-        <div class="grid md:grid-cols-3 gap-8">
-            <div class="text-center p-6 bg-white rounded-lg shadow-md">
-                <div class="text-4xl text-green-600 mb-4">
-                    <i class="fas fa-cloud-sun"></i>
-                </div>
-                <h3 class="text-xl font-semibold mb-2">Weather Monitoring</h3>
-                <p class="text-gray-600">Real-time weather data, forecasts, and alerts for your farm locations.</p>
-            </div>
-
-            <div class="text-center p-6 bg-white rounded-lg shadow-md">
-                <div class="text-4xl text-green-600 mb-4">
-                    <i class="fas fa-seedling"></i>
-                </div>
-                <h3 class="text-xl font-semibold mb-2">Crop Management</h3>
-                <p class="text-gray-600">Track your crops, monitor health, and manage multiple farm locations.</p>
-            </div>
-
-            <div class="text-center p-6 bg-white rounded-lg shadow-md">
-                <div class="text-4xl text-green-600 mb-4">
-                    <i class="fas fa-exclamation-triangle"></i>
-                </div>
-                <h3 class="text-xl font-semibold mb-2">Damage Reports</h3>
-                <p class="text-gray-600">Quick damage assessment and reporting for insurance and government aid.</p>
-            </div>
-        </div>
+  <div class="grid md:grid-cols-3 gap-8">
+    <div class="text-center p-6 bg-white rounded-lg shadow-md hover:-translate-y-1 transition-transform">
+      <div class="text-4xl text-green-600 mb-4 animate-float">
+        <i class="fas fa-cloud-sun"></i>
+      </div>
+      <h3 class="text-xl font-semibold mb-2">Weather Monitoring</h3>
+      <p class="text-gray-600">Real-time weather data and forecasts</p>
     </div>
+
+    <div class="text-center p-6 bg-white rounded-lg shadow-md hover:-translate-y-1 transition-transform">
+      <div class="text-4xl text-green-600 mb-4 animate-float">
+        <i class="fas fa-seedling"></i>
+      </div>
+      <h3 class="text-xl font-semibold mb-2">Crop Management</h3>
+      <p class="text-gray-600">Track your crops and farm locations</p>
+    </div>
+
+    <div class="text-center p-6 bg-white rounded-lg shadow-md hover:-translate-y-1 transition-transform">
+      <div class="text-4xl text-green-600 mb-4 animate-float">
+        <i class="fas fa-exclamation-triangle"></i>
+      </div>
+      <h3 class="text-xl font-semibold mb-2">Damage Reports</h3>
+      <p class="text-gray-600">Quick damage assessment</p>
+    </div>
+  </div>
 </div>
 
-<div class="bg-gray-100 py-16">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center">
-            <h2 class="text-3xl font-bold text-gray-900 mb-4">Why Choose Climate Monitor?</h2>
-            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
-                <div class="text-center">
-                    <div class="text-2xl text-green-600 mb-2">
-                        <i class="fas fa-money-bill-slash"></i>
-                    </div>
-                    <h4 class="font-semibold">Completely Free</h4>
-                    <p class="text-sm text-gray-600">No hidden costs or subscriptions</p>
-                </div>
-                <div class="text-center">
-                    <div class="text-2xl text-green-600 mb-2">
-                        <i class="fas fa-mobile-alt"></i>
-                    </div>
-                    <h4 class="font-semibold">Mobile Friendly</h4>
-                    <p class="text-sm text-gray-600">Works perfectly on smartphones</p>
-                </div>
-                <div class="text-center">
-                    <div class="text-2xl text-green-600 mb-2">
-                        <i class="fas fa-map-marker-alt"></i>
-                    </div>
-                    <h4 class="font-semibold">Bangladesh Focused</h4>
-                    <p class="text-sm text-gray-600">Built for local farmers and conditions</p>
-                </div>
-                <div class="text-center">
-                    <div class="text-2xl text-green-600 mb-2">
-                        <i class="fas fa-brain"></i>
-                    </div>
-                    <h4 class="font-semibold">Smart Predictions</h4>
-                    <p class="text-sm text-gray-600">AI-powered weather insights</p>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+<style>
+  @keyframes gradient-shift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  
+  .animate-gradient-shift {
+    background-size: 400% 400%;
+    animation: gradient-shift 15s ease infinite;
+  }
+  
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+  
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+  
+  .quick-question {
+    @apply bg-white/20 text-white px-4 py-2 rounded-full text-sm hover:bg-white/30 transition-transform hover:-translate-y-0.5 backdrop-blur-sm;
+  }
+  
+  .flex-center {
+    @apply flex items-center justify-center;
+  }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Chat functionality
+  const chatMessages = document.getElementById('mainChatMessages');
+  const chatInput = document.getElementById('mainChatInput');
+  const chatSend = document.getElementById('mainChatSend');
+  
+  function addMessage(content, isUser = false) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `flex items-start space-x-3 mb-4 ${isUser ? 'justify-end' : ''}`;
+    
+    messageDiv.innerHTML = isUser ? `
+      <div class="bg-green-500 text-white rounded-lg p-3 shadow-sm max-w-xs order-2">
+        <p class="text-sm">${content}</p>
+      </div>
+      <div class="w-8 h-8 bg-blue-500 rounded-full flex-center flex-shrink-0 order-1">
+        <i class="fas fa-user text-white text-sm"></i>
+      </div>
+    ` : `
+      <div class="w-8 h-8 bg-green-500 rounded-full flex-center flex-shrink-0">
+        <i class="fas fa-seedling text-white text-sm"></i>
+      </div>
+      <div class="bg-white rounded-lg p-3 shadow-sm max-w-xs">
+        <p class="text-sm text-gray-700">${content}</p>
+      </div>
+    `;
+    
+    chatMessages.appendChild(messageDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+
+  async function sendMessage() {
+    const message = chatInput.value.trim();
+    if (!message) return;
+
+    addMessage(message, true);
+    chatInput.value = '';
+    chatSend.disabled = true;
+
+    try {
+      const response = await fetch('/chat/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({ message })
+      });
+      
+      const data = await response.json();
+      addMessage(data.success ? data.response : 'Error: Please try again');
+    } catch {
+      addMessage('Connection error. Please try again later.');
+    }
+
+    chatSend.disabled = false;
+  }
+
+  chatSend.addEventListener('click', sendMessage);
+  chatInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') sendMessage();
+  });
+
+  // Quick questions
+  document.querySelectorAll('.quick-question').forEach(btn => {
+    btn.addEventListener('click', () => {
+      chatInput.value = btn.dataset.question;
+      sendMessage();
+    });
+  });
+
+  // CSRF helper
+  function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+  }
+});
+</script>
 {% endblock %}
