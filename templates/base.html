@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
 </head>
 <body class="bg-gray-50">
-    <nav class="bg-green-600 shadow-lg">
+    <nav class="bg-green-900 shadow-lg">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
                 <div class="flex items-center">
@@ -20,22 +20,22 @@
                     </a>
                 </div>
                 
-                <div class="flex items-center space-x-4">
+                <div class="flex items-center space-x-5">
                     {% if user.is_authenticated %}
-                        <a href="{% url 'farms:dashboard' %}" class="text-white hover:text-green-200">
-                            <i class="fas fa-tachometer-alt mr-1"></i>Dashboard
+                        <a href="{% url 'farms:dashboard' %}" class="text-white hover:text-blue-600">
+                            <i class="fas fa-tachometer-alt mr-1 bl"></i>DASHBOARD
                         </a>
-                        <a href="{% url 'farms:farm_list' %}" class="text-white hover:text-green-200">
-                            <i class="fas fa-seedling mr-1"></i>My Farms
+                        <a href="{% url 'farms:farm_list' %}" class="text-white hover:text-blue-600">
+                            <i class="fas fa-seedling mr-1"></i>FARMS
                         </a>
-                        <a href="{% url 'weather:dashboard' %}" class="text-white hover:text-green-200">
-                            <i class="fas fa-cloud-sun mr-1"></i>Weather
+                        <a href="{% url 'weather:dashboard' %}" class="text-white hover:text-blue-600">
+                            <i class="fas fa-cloud-sun mr-1"></i>WEATHER
                         </a>
-                        <a href="{% url 'damage_reports:report_list' %}" class="text-white hover:text-green-200">
-                            <i class="fas fa-exclamation-triangle mr-1"></i>Reports
+                        <a href="{% url 'damage_reports:report_list' %}" class="text-white hover:text-blue-600">
+                            <i class="fas fa-exclamation-triangle mr-1"></i>REPORTS
                         </a>
                         <div class="relative group">
-                            <button class="text-white hover:text-green-200 flex items-center">
+                            <button class="text-white hover:text-blue-600 flex items-center">
                                 <i class="fas fa-user mr-1"></i>{{ user.username }}
                                 <i class="fas fa-chevron-down ml-1"></i>
                             </button>
