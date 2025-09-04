@@ -1,0 +1,55 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environment
+venv/
+env/
+*.env
+.env
+
+# Django stuff
+*.log
+*.pot
+*.pyc
+db.sqlite3
+media/
+staticfiles/
+static/
+
+# Secrets
+.env
+*.secret
+*.key
+
+# VS Code
+.vscode/
+
+# PyCharm
+.idea/
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Migrations (optional, if you don’t want to track them)
+#migrations/
+
+# Node modules (if using frontend)
+node_modules/
+
+# Compiled files
+*.mo
+
+# Coverage / test reports
+htmlcov/
+.tox/
+.coverage
+coverage.xml
+*.cover
+*.py,cover
+
+# Backup files
+*.bak
+*.swp
