@@ -8,7 +8,7 @@ from . import views
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', views.home, name='home'),  
-    path('chat/', views.chat_with_ai, name='chat'),  
+    path("chat/", views.chat_view, name="chat"),  
     path('users/', include('users.urls')),
     path('farms/', include('farms.urls')),
     path('weather/', include('weather.urls')),

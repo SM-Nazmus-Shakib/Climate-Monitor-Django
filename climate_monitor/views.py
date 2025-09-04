@@ -1,116 +1,215 @@
-
 import json
+import requests
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_http_methods
 from django.shortcuts import render
+from django.conf import settings
+from azure.ai.inference import ChatCompletionsClient
+from azure.ai.inference.models import SystemMessage, UserMessage
+from azure.core.credentials import AzureKeyCredential
+import os
+import logging
 
-def home(request):
-    return render(request, 'home.html')
+logger = logging.getLogger(__name__)
+
+def get_agriculture_system_prompt():
+    """System prompt for agriculture assistant"""
+    return """You are an expert agriculture assistant for Bangladesh farmers. 
+
+Provide practical advice on:
+- Rice, wheat, potato cultivation
+- Fertilizers (Urea, TSP, MOP amounts)
+- Weather-based farming decisions
+- Pest and disease management
+- Market timing and prices
+
+Keep responses under 200 words, use simple language, and include specific amounts/timing when relevant. You can respond in English or basic Bangla if needed."""
+
+def try_github_ai(user_message):
+    """Try to use GitHub AI API"""
+    try:
+        system_prompt = get_agriculture_system_prompt()
+        
+        endpoint = settings.GITHUB_AI_ENDPOINT
+        model = settings.GITHUB_AI_MODEL
+        token = settings.GITHUB_TOKEN
+        
+        client = ChatCompletionsClient(
+            endpoint=endpoint,
+            credential=AzureKeyCredential(token),
+        )
+
+        response = client.complete(
+            messages=[
+                SystemMessage(system_prompt),
+                UserMessage(user_message),
+            ],
+            temperature=0.7,
+            top_p=1.0,
+            max_tokens=500,
+            model=model
+        )
+
+        return response.choices[0].message.content
+                
+    except Exception as e:
+        logger.error(f"GitHub AI API error: {str(e)}")
+        return None
+
+def try_local_ai(user_message):
+    """Simple rule-based AI for common questions"""
+    message_lower = user_message.lower()
+    
+    # Rice-related questions
+    if any(word in message_lower for word in ['rice', 'ধান', 'paddy']):
+        if 'fertilizer' in message_lower or 'urea' in message_lower or 'সার' in message_lower:
+            return """For rice cultivation in Bangladesh:
+• **Urea**: 180-200 kg per hectare (split into 3 applications)
+• **TSP**: 90-100 kg per hectare (apply during final land preparation)
+• **MOP**: 70-80 kg per hectare (apply during final land preparation)
+• **Zinc**: 5-10 kg per hectare (if zinc deficiency is observed)
+
+Apply first urea dose 15-20 days after transplanting, second dose at 35-40 days, and third dose at 55-60 days."""
+        
+        elif 'plant' in message_lower or 'চারা' in message_lower or 'সময়' in message_lower:
+            return """Rice planting seasons in Bangladesh:
+• **Aman rice**: Transplant June-July, harvest November-December
+• **Boro rice**: Transplant January-February, harvest April-May
+• **Aus rice**: Transplant March-April, harvest July-August
+
+Ideal age for transplanting: 30-35 days for Aman, 40-45 days for Boro."""
+        
+        elif 'disease' in message_lower or 'রোগ' in message_lower:
+            return """Common rice diseases in Bangladesh:
+• **Blast**: Use resistant varieties like BRRI dhan49, BRRI dhan52
+• **Bacterial leaf blight**: Avoid excessive nitrogen, use balanced fertilization
+• **Sheath blight**: Maintain proper plant spacing, avoid water stagnation
+
+For severe infections, consult with local agriculture office for appropriate fungicides."""
+    
+    # Wheat-related questions
+    elif any(word in message_lower for word in ['wheat', 'গম']):
+        return """Wheat cultivation in Bangladesh:
+• **Planting time**: November is ideal
+• **Fertilizer**: 120-150 kg Urea, 100-120 kg TSP, 80-100 kg MOP per hectare
+• **Irrigation**: 3-4 irrigations needed (crown root, late tillering, flowering, grain filling stages)
+• **Popular varieties**: BARI Gom 25, BARI Gom 26, BARI Gom 27
+
+Harvest when grains are hard and moisture content is around 20-25%."""
+    
+    # Potato-related questions
+    elif any(word in message_lower for word in ['potato', 'আলু']):
+        return """Potato cultivation tips:
+• **Planting time**: October to November
+• **Seed rate**: 1500-1800 kg per hectare
+• **Fertilizer**: 250-300 kg Urea, 180-200 kg TSP, 200-250 kg MOP per hectare
+• **Harvest**: 90-100 days after planting
+
+Store potatoes in cool, dark, well-ventilated place to prevent greening."""
+    
+    # Weather-related questions
+    elif any(word in message_lower for word in ['weather', 'আবহাওয়া', 'rain', 'বৃষ্টি']):
+        return """Weather considerations for farming in Bangladesh:
+• **Monsoon (June-September)**: Ideal for Aman rice, but watch for flooding
+• **Winter (November-February)**: Good for wheat, potato, vegetables
+• **Summer (March-May)**: Suitable for Aus rice, mango, jackfruit
+
+Check daily weather forecasts before applying pesticides or fertilizers."""
+    
+    return None
+
+def get_fallback_response(message):
+    """Enhanced fallback response"""
+    local_ai_response = try_local_ai(message)
+    if local_ai_response:
+        return local_ai_response
+    
+    message_lower = message.lower()
+    
+    if any(word in message_lower for word in ['rice', 'ধান']):
+        return """🌾 **Rice Farming Tips:**
+• **Aman**: Plant June-July, harvest Nov-Dec
+• **Boro**: Plant Dec-Jan, harvest April-May
+• **Fertilizer**: 80-100kg Urea + 40kg TSP per acre
+• **Water**: Keep 2-3cm depth in field
+• **Varieties**: BRRI dhan28, BRRI dhan29
+
+Ask about specific rice problems!"""
+    
+    elif any(word in message_lower for word in ['wheat', 'গম']):
+        return """🌾 **Wheat Cultivation:**
+• **Season**: Plant Nov-Dec, harvest March-April
+• **Fertilizer**: 60-80kg Urea + 40kg TSP per acre
+• **Irrigation**: 3-4 times during growth
+• **Varieties**: BARI Gom-25, BARI Gom-26
+
+Need help with wheat diseases or timing?"""
+    
+    elif any(word in message_lower for word in ['potato', 'আলু']):
+        return """🥔 **Potato Growing:**
+• **Season**: Plant Nov-Dec, harvest Feb-March
+• **Fertilizer**: 100kg Urea + 60kg TSP + 80kg MOP per acre
+• **Disease**: Prevent late blight with good drainage
+• **Storage**: Cool, dark place for better prices
+
+Ask about potato diseases or market timing!"""
+    
+    else:
+        return """🌱 **Agriculture Assistant Ready!**
+
+I can help with:
+• Rice, wheat, potato farming
+• Fertilizer recommendations  
+• Disease prevention
+• Weather advice
+• Market information
+
+**Ask specific questions like:**
+• "How much urea for rice?"
+• "When to plant wheat?"
+• "How to prevent rice blast?"
+
+What farming question do you have?"""
 
 @csrf_exempt
-@require_http_methods(["POST"])
-def chat_with_ai(request):
-    """Simple rule-based chat responses for Bangladesh agriculture"""
-    try:
-        data = json.loads(request.body)
-        user_message = data.get('message', '').strip().lower()
-        
-        if not user_message:
+def chat_view(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body.decode("utf-8"))
+            user_message = data.get("message", "").strip()
+
+            # Input validation
+            if not user_message:
+                return JsonResponse({"success": False, "error": "Please enter a message."})
+            
+            if len(user_message) > 200:
+                return JsonResponse({"success": False, "error": "Message too long. Please keep under 200 characters."})
+
+            # Try GitHub AI API first
+            github_ai_response = try_github_ai(user_message)
+            if github_ai_response:
+                return JsonResponse({
+                    "success": True, 
+                    "response": github_ai_response,
+                    "source": "github_ai"
+                })
+
+            # If GitHub AI fails, use fallback response
+            fallback_response = get_fallback_response(user_message)
             return JsonResponse({
-                'success': False,
-                'error': 'Message is required'
+                "success": True, 
+                "response": fallback_response,
+                "source": "fallback"
             })
-        response_text = get_agriculture_response(user_message)
-        
-        return JsonResponse({
-            'success': True,
-            'response': response_text
-        })
-        
-    except json.JSONDecodeError:
-        return JsonResponse({
-            'success': False,
-            'error': 'Invalid message format'
-        })
-    except Exception as e:
-        return JsonResponse({
-            'success': False,
-            'error': 'Sorry, I couldn\'t process your request. Please try again.'
-        })
 
-def get_agriculture_response(user_message):
-    """Generate agriculture-specific responses for Bangladesh farmers"""
+        except json.JSONDecodeError:
+            return JsonResponse({"success": False, "error": "Invalid message format."})
+        except Exception as e:
+            logger.error(f"Chat view error: {str(e)}")
+            return JsonResponse({"success": False, "error": "Something went wrong. Please try again."})
     
-    # Weather and climate responses
-    if any(word in user_message for word in ['weather', 'rain', 'temperature', 'climate']):
-        return "🌤️ Monitor weather forecasts daily using our weather section. Bangladesh weather can change quickly - prepare for both drought and flooding. Check rainfall patterns for proper irrigation timing."
-    
-    if any(word in user_message for word in ['monsoon', 'flood', 'flooding']):
-        return "🌧️ Monsoon tips: Clean drainage channels, plant flood-resistant rice varieties like BRRI dhan51, elevate seed beds, and ensure proper water management to prevent crop damage."
-    
-    if any(word in user_message for word in ['drought', 'dry', 'water shortage']):
-        return "☀️ Drought management: Use mulching to retain soil moisture, implement drip irrigation, plant drought-tolerant varieties, and harvest rainwater during monsoon for dry season use."
-    
-    # Rice cultivation (most important crop in Bangladesh)
-    if any(word in user_message for word in ['rice', 'boro', 'aman', 'aus', 'dhan']):
-        return "🌾 Rice cultivation: Use quality seeds like BRRI varieties, maintain 2-5cm water level, apply urea in 3 splits, watch for brown planthopper and blast disease. Plant Boro in Dec-Jan, Aman in Jun-Jul."
-    
-    # Other major crops
-    if any(word in user_message for word in ['jute', 'pat']):
-        return "🌿 Jute farming: Plant in March-April before monsoon, ensure good drainage, use 8-10 kg seeds per acre, and harvest before fiber becomes coarse (120-150 days after sowing)."
-    
-    if any(word in user_message for word in ['wheat', 'gom']):
-        return "🌾 Wheat cultivation: Sow in November-December, use 120-140 kg seeds per acre, apply balanced fertilizer, and harvest before monsoon arrives in April-May."
-    
-    if any(word in user_message for word in ['potato', 'aloo']):
-        return "🥔 Potato farming: Plant certified seeds in November-December, ensure well-drained soil, apply organic manure, and protect from late blight disease with proper fungicide spray."
-    
-    if any(word in user_message for word in ['tea', 'cha']):
-        return "🍃 Tea cultivation: Prune during December-January, apply balanced fertilizer in split doses, ensure proper drainage, and harvest young shoots every 7-10 days during growing season."
-    
-    # Fertilizer and soil management
-    if any(word in user_message for word in ['fertilizer', 'urea', 'tsp', 'mop', 'nutrients']):
-        return "🌱 Fertilizer guide: Use soil testing for proper NPK ratios. Apply urea in 2-3 splits, TSP at planting, MOP at tillering. Organic fertilizers like compost improve soil health long-term."
-    
-    if any(word in user_message for word in ['soil', 'mati', 'ph', 'organic matter']):
-        return "🌍 Soil health: Test soil pH (ideal 6.0-7.0), add organic matter through compost, practice crop rotation, avoid over-tillage, and use green manure crops to improve fertility."
-    
-    # Pest and disease management
-    if any(word in user_message for word in ['pest', 'insect', 'bug', 'disease', 'fungus']):
-        return "🐛 Pest control: Use IPM approach - resistant varieties, crop rotation, beneficial insects, pheromone traps. For rice: watch for brown planthopper, stem borer. Apply pesticides only when threshold reached."
-    
-    if any(word in user_message for word in ['brown planthopper', 'stem borer', 'blast']):
-        return "⚠️ Major rice pests: Brown planthopper - use resistant varieties, avoid excessive nitrogen. Stem borer - use pheromone traps, release egg parasitoids. Blast disease - use resistant varieties, avoid late evening irrigation."
-    
-    # Irrigation and water management
-    if any(word in user_message for word in ['irrigation', 'water', 'pani', 'watering']):
-        return "💧 Water management: Use alternate wetting and drying for rice to save 25% water. Install drip irrigation for vegetables. Water early morning or evening to reduce evaporation."
-    
-    # Government schemes and support
-    if any(word in user_message for word in ['government', 'loan', 'subsidy', 'support', 'scheme']):
-        return "🏛️ Government support: Visit local Agricultural Extension Office for subsidized seeds, fertilizers, and training. Apply for agricultural loans through banks. Join farmer groups for better access to resources."
-    
-    # Seasonal advice
-    if any(word in user_message for word in ['winter', 'rabi', 'sheet']):
-        return "❄️ Winter crops (Rabi): Best time for wheat, potato, vegetables, mustard. Prepare land well, ensure irrigation facility, and protect from fog damage with proper spacing."
-    
-    if any(word in user_message for word in ['summer', 'grisho', 'kharif']):
-        return "☀️ Summer crops (Kharif): Focus on rice, jute, sugarcane. Ensure adequate water supply, use heat-tolerant varieties, and prepare for monsoon planting."
-    
-    # Storage and post-harvest
-    if any(word in user_message for word in ['storage', 'store', 'preserve', 'drying']):
-        return "🏪 Post-harvest: Dry grains to 12-14% moisture, use proper storage containers, apply neem powder to prevent insects, and store in cool, dry places away from moisture."
-    
-    # Market and economics
-    if any(word in user_message for word in ['price', 'market', 'sell', 'profit']):
-        return "💰 Marketing tips: Check daily market prices, form farmer groups for better bargaining power, add value through processing, and diversify crops to reduce risk."
-    
-    # Technology and modern farming
-    if any(word in user_message for word in ['technology', 'modern', 'app', 'digital']):
-        return "📱 Modern farming: Use weather apps for forecasts, soil testing apps, market price apps. Consider mechanization for larger farms and precision agriculture techniques."
-    
-    # Default response for unmatched queries
-    return "🌾 I'm here to help with Bangladesh agriculture! Ask me about rice cultivation, weather advice, irrigation, fertilizers, pest control, or any farming challenges you're facing."
+    return JsonResponse({"success": False, "error": "Invalid request method."})
 
-# If you have existing views, make sure to keep them and just add the above functions
+def home(request):
+    """Home view"""
+    return render(request, 'home.html')
