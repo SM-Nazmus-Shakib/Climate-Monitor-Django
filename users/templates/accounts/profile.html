@@ -1,0 +1,270 @@
+{% extends 'base.html' %}
+
+{% block title %}Profile - Climate Monitor{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">My Profile</h1>
+        <p class="text-gray-600 mt-2">Manage your account information and settings</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Profile Picture and Basic Info -->
+        <div class="space-y-6">
+            <!-- Profile Picture Card -->
+            <div class="bg-white shadow-sm rounded-xl p-6 border border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900 mb-6">Profile Picture</h3>
+                
+                <div class="flex flex-col items-center">
+                    <div class="relative mb-6">
+                        {% if user.profile_picture %}
+                            <img src="{{ user.profile_picture.url }}" alt="Profile Picture" class="w-32 h-32 rounded-full object-cover shadow-sm border-4 border-green-100">
+                        {% else %}
+                            <div class="w-32 h-32 bg-green-100 rounded-full flex items-center justify-center border-4 border-green-200">
+                                <i class="fas fa-user text-green-600 text-4xl"></i>
+                            </div>
+                        {% endif %}
+                        <button class="absolute bottom-2 right-2 w-10 h-10 bg-green-600 text-white rounded-full hover:bg-green-700 transition-colors shadow-sm flex items-center justify-center">
+                            <i class="fas fa-camera text-sm"></i>
+                        </button>
+                    </div>
+                    
+                    <form enctype="multipart/form-data" method="post" class="w-full">
+                        {% csrf_token %}
+                        <input type="file" id="profilePictureInput" name="profile_picture" accept="image/*" class="hidden">
+                        <button type="button" onclick="document.getElementById('profilePictureInput').click()" class="w-full px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm">
+                            <i class="fas fa-upload mr-2"></i>Change Picture
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Account Statistics -->
+            <div class="bg-white shadow-sm rounded-xl p-6 border border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900 mb-6">Account Statistics</h3>
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center py-2">
+                        <div class="flex items-center">
+                            <i class="fas fa-seedling text-green-600 mr-3"></i>
+                            <span class="text-gray-700">Total Farms</span>
+                        </div>
+                        <span class="text-xl font-semibold text-green-600">{{ user.farms.count }}</span>
+                    </div>
+                    <div class="flex justify-between items-center py-2 border-t border-gray-100">
+                        <div class="flex items-center">
+                            <i class="fas fa-exclamation-triangle text-red-600 mr-3"></i>
+                            <span class="text-gray-700">Damage Reports</span>
+                        </div>
+                        <span class="text-xl font-semibold text-red-600">{{ user.damagereport_set.count }}</span>
+                    </div>
+                    <div class="flex justify-between items-center py-2 border-t border-gray-100">
+                        <div class="flex items-center">
+                            <i class="fas fa-map text-blue-600 mr-3"></i>
+                            <span class="text-gray-700">Total Area</span>
+                        </div>
+                        <span class="text-xl font-semibold text-blue-600">
+                            {% if user.farms.all %}
+                                {% for farm in user.farms.all %}
+                                    {% if forloop.first %}{{ farm.area_acres }}{% else %} + {{ farm.area_acres }}{% endif %}
+                                {% endfor %} acres
+                            {% else %}
+                                0 acres
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Profile Information -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Personal Information -->
+            <div class="bg-white shadow-sm rounded-xl p-6 border border-gray-200">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-lg font-semibold text-gray-900">Personal Information</h2>
+                    <button class="px-4 py-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors text-sm">
+                        <i class="fas fa-edit mr-2"></i>Edit
+                    </button>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                        <div class="p-3 bg-gray-50 rounded-lg border">
+                            <p class="text-gray-900">{{ user.get_full_name|default:"Not provided" }}</p>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Username</label>
+                        <div class="p-3 bg-gray-50 rounded-lg border">
+                            <p class="text-gray-900">{{ user.username }}</p>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                        <div class="p-3 bg-gray-50 rounded-lg border">
+                            <p class="text-gray-900">{{ user.email|default:"Not provided" }}</p>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+                        <div class="p-3 bg-gray-50 rounded-lg border">
+                            <p class="text-gray-900">{{ user.phone_number|default:"Not provided" }}</p>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Location</label>
+                        <div class="p-3 bg-gray-50 rounded-lg border">
+                            <p class="text-gray-900">{{ user.location|default:"Not provided" }}</p>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Account Type</label>
+                        <div class="p-3 bg-gray-50 rounded-lg border">
+                            {% if user.is_farmer %}
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                                    <i class="fas fa-seedling mr-2"></i>Farmer
+                                </span>
+                            {% else %}
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                                    <i class="fas fa-user mr-2"></i>User
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Member Since</label>
+                        <div class="p-3 bg-gray-50 rounded-lg border">
+                            <p class="text-gray-900">{{ user.date_joined|date:"F d, Y" }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Farm Management -->
+            <div class="bg-white shadow-sm rounded-xl p-6 border border-gray-200">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-lg font-semibold text-gray-900">My Farms</h2>
+                    <a href="{% url 'farms:farm_create' %}" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm">
+                        <i class="fas fa-plus mr-2"></i>Add Farm
+                    </a>
+                </div>
+
+                {% if user.farms.all %}
+                    <div class="space-y-4">
+                        {% for farm in user.farms.all %}
+                            <div class="p-4 border border-gray-200 rounded-lg hover:border-green-300 transition-colors">
+                                <div class="flex justify-between items-start">
+                                    <div class="flex-1">
+                                        <h3 class="font-semibold text-gray-900 mb-2">{{ farm.name }}</h3>
+                                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+                                            <div class="flex items-center text-gray-600">
+                                                <i class="fas fa-map-marker-alt text-red-500 mr-2"></i>
+                                                {{ farm.location }}
+                                            </div>
+                                            <div class="flex items-center text-gray-600">
+                                                <i class="fas fa-expand-arrows-alt text-blue-500 mr-2"></i>
+                                                {{ farm.area_acres }} acres
+                                            </div>
+                                            <div class="flex items-center text-gray-600">
+                                                <i class="fas fa-seedling text-green-500 mr-2"></i>
+                                                {{ farm.crop_type|default:"Not specified" }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="ml-4 flex space-x-2">
+                                        <a href="{% url 'farms:farm_detail' farm.id %}" class="text-blue-600 hover:text-blue-800">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{% url 'farms:farm_edit' farm.id %}" class="text-green-600 hover:text-green-800">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-8">
+                        <i class="fas fa-seedling text-4xl text-gray-300 mb-4"></i>
+                        <p class="text-gray-500 mb-4">No farms added yet</p>
+                        <a href="{% url 'farms:farm_create' %}" class="inline-block px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                            <i class="fas fa-plus mr-2"></i>Add Your First Farm
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+
+           
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Profile picture upload handling
+    const profilePictureInput = document.getElementById('profilePictureInput');
+    
+    profilePictureInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            // Validate file size (max 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                alert('File size too large. Maximum size is 5MB.');
+                return;
+            }
+            
+            // Validate file type
+            const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+            if (!allowedTypes.includes(file.type)) {
+                alert('Invalid file type. Only JPEG, PNG and GIF are allowed.');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('profile_picture', file);
+            formData.append('csrfmiddlewaretoken', getCookie('csrftoken'));
+            
+            // Show loading state
+            const button = e.target.parentElement.querySelector('button');
+            const originalText = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Uploading...';
+            button.disabled = true;
+            
+            fetch('{% url "users:update_profile_picture" %}', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Reload the page to show the new profile picture
+                    window.location.reload();
+                } else {
+                    alert(data.error || 'Error uploading image. Please try again.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error uploading image. Please try again.');
+            })
+            .finally(() => {
+                button.innerHTML = originalText;
+                button.disabled = false;
+            });
+        }
+    });
+    
+    // CSRF helper function
+    function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+    }
+});
+</script>
+{% endblock %}
+

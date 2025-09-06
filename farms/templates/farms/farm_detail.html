@@ -1,0 +1,662 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ farm.name }} - Climate Monitor{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="flex justify-between items-center mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">{{ farm.name }}</h1>
+            <p class="text-gray-600">{{ farm.location }} • {{ farm.crop_type|capfirst }}</p>
+            {% if farm.latitude and farm.longitude %}
+            <p class="text-sm text-gray-500 mt-1">
+                <i class="fas fa-map-marker-alt mr-1"></i>
+                {{ farm.latitude }}, {{ farm.longitude }}
+            </p>
+            {% endif %}
+        </div>
+        <div class="flex space-x-3">
+            <a href="{% url 'farms:farm_edit' farm.id %}" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                <i class="fas fa-edit mr-2"></i>Edit Farm
+            </a>
+            <a href="{% url 'farms:farm_list' %}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700">
+                <i class="fas fa-arrow-left mr-2"></i>Back to Farms
+            </a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Main Content -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Farm Location Map -->
+            {% if farm.latitude and farm.longitude %}
+            <div class="bg-white shadow rounded-lg p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-semibold text-gray-900">Farm Location</h2>
+                    <button onclick="toggleMapView()" class="text-sm text-blue-600 hover:text-blue-800">
+                        <span id="map-toggle-text">Show Map</span>
+                    </button>
+                </div>
+                
+                <div id="farm-map-container" class="hidden">
+                    <div id="farm-location-map" class="h-64 w-full border border-gray-300 rounded-md mb-4"></div>
+                    <div class="grid grid-cols-2 gap-4 text-sm text-gray-600">
+                        <div>
+                            <span class="font-medium">Coordinates:</span>
+                            <p>{{ farm.latitude }}, {{ farm.longitude }}</p>
+                        </div>
+                        <div>
+                            <span class="font-medium">Area Coverage:</span>
+                            <p>{{ farm.area_acres }} acres</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Basic Information -->
+            <div class="bg-white shadow rounded-lg p-6">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">Farm Information</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <span class="text-sm text-gray-500">Area:</span>
+                        <p class="font-medium">{{ farm.area_acres }} acres</p>
+                    </div>
+                    <div>
+                        <span class="text-sm text-gray-500">Crop Type:</span>
+                        <p class="font-medium">{{ farm.get_crop_type_display }}</p>
+                    </div>
+                    <div>
+                        <span class="text-sm text-gray-500">Planting Date:</span>
+                        <p class="font-medium">{{ farm.planting_date }}</p>
+                    </div>
+                    <div>
+                        <span class="text-sm text-gray-500">Expected Harvest:</span>
+                        <p class="font-medium">{{ farm.expected_harvest_date }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Crop Monitoring -->
+            <div class="bg-white shadow rounded-lg p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-semibold text-gray-900">Crop Monitoring</h2>
+                    <button onclick="toggleMonitoringForm()" class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700">
+                        <i class="fas fa-plus mr-2"></i>Add Record
+                    </button>
+                </div>
+
+                <!-- Add Monitoring Form -->
+                <div id="monitoring-form" class="hidden mb-6 p-4 bg-gray-50 rounded-lg">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="id_health_status" class="block text-sm font-medium text-gray-700">Health Status</label>
+                                <select name="health_status" id="id_health_status" required class="form-select mt-1 block w-full">
+                                    <option value="">Select Status</option>
+                                    <option value="excellent">Excellent</option>
+                                    <option value="good">Good</option>
+                                    <option value="fair">Fair</option>
+                                    <option value="poor">Poor</option>
+                                    <option value="critical">Critical</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <label for="id_notes" class="block text-sm font-medium text-gray-700">Notes</label>
+                            <textarea name="notes" id="id_notes" rows="4" class="form-textarea mt-1 block w-full" placeholder="Add any observations or notes about the crop condition..."></textarea>
+                        </div>
+                        <div class="mt-4 flex justify-end space-x-3">
+                            <button type="button" onclick="toggleMonitoringForm()" class="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                                Cancel
+                            </button>
+                            <button type="submit" class="px-3 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-green-600 hover:bg-green-700">
+                                Add Record
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Monitoring Records -->
+                {% if monitoring_records %}
+                <div class="space-y-4">
+                    {% for record in monitoring_records %}
+                    <div class="border-l-4 {% if record.health_status == 'excellent' %}border-green-400 bg-green-50{% elif record.health_status == 'good' %}border-blue-400 bg-blue-50{% elif record.health_status == 'fair' %}border-yellow-400 bg-yellow-50{% elif record.health_status == 'poor' %}border-orange-400 bg-orange-50{% else %}border-red-400 bg-red-50{% endif %} p-4">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {% if record.health_status == 'excellent' %}bg-green-100 text-green-800{% elif record.health_status == 'good' %}bg-blue-100 text-blue-800{% elif record.health_status == 'fair' %}bg-yellow-100 text-yellow-800{% elif record.health_status == 'poor' %}bg-orange-100 text-orange-800{% else %}bg-red-100 text-red-800{% endif %}">
+                                    {{ record.get_health_status_display }}
+                                </span>
+                                {% if record.notes %}
+                                <p class="text-sm text-gray-700 mt-2">{{ record.notes }}</p>
+                                {% endif %}
+                            </div>
+                            <span class="text-xs text-gray-500">{{ record.recorded_at|date:"M d, Y H:i" }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-gray-500 text-center py-4">No monitoring records yet. Add your first record to track crop health.</p>
+                {% endif %}
+            </div>
+
+            <!-- Historical Weather Chart -->
+            {% if farm.latitude and farm.longitude %}
+            <div class="bg-white shadow rounded-lg p-6">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">Weather Trends</h2>
+                <div id="weather-chart-container">
+                    <canvas id="weather-chart" class="w-full h-64"></canvas>
+                </div>
+                <div class="mt-4 text-center">
+                    <button onclick="loadWeatherHistory()" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                        <i class="fas fa-chart-line mr-2"></i>Load Weather Data
+                    </button>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar -->
+        <div class="space-y-6">
+            <!-- Current Weather Widget -->
+            {% if farm.latitude and farm.longitude %}
+            <div class="bg-white shadow rounded-lg p-6" id="weather-widget">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Current Weather</h3>
+                <div class="text-center">
+                    <button onclick="loadCurrentWeather()" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                        <i class="fas fa-sync-alt mr-2"></i>Load Weather
+                    </button>
+                </div>
+                <div id="current-weather-content" class="hidden mt-4">
+                    <!-- Current weather data will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Weather Forecast -->
+            <div class="bg-white shadow rounded-lg p-6" id="forecast-widget">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">7-Day Forecast</h3>
+                <div id="forecast-content" class="space-y-3">
+                    <div class="text-center text-gray-500">
+                        <p class="text-sm">Load current weather to see forecast</p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Quick Actions -->
+            <div class="bg-white shadow rounded-lg p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+                <div class="space-y-3">
+                    <a href="{% url 'damage_reports:report_create' %}" class="block w-full text-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>Report Damage
+                    </a>
+                    <a href="{% url 'weather:dashboard' %}" class="block w-full text-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        <i class="fas fa-cloud-sun mr-2"></i>Weather Dashboard
+                    </a>
+                    {% if farm.latitude and farm.longitude %}
+                    <button onclick="exportFarmData()" class="block w-full text-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        <i class="fas fa-download mr-2"></i>Export Data
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Farm Statistics -->
+            <div class="bg-white shadow rounded-lg p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Farm Stats</h3>
+                <div class="space-y-3">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600">Days since planting:</span>
+                        <span class="font-medium" id="days-planted">-</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600">Days to harvest:</span>
+                        <span class="font-medium" id="days-to-harvest">-</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600">Monitoring records:</span>
+                        <span class="font-medium">{{ monitoring_records.count }}</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600">Growth progress:</span>
+                        <span class="font-medium" id="growth-progress">-</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css">
+
+<!-- Chart.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chart.js/3.9.1/chart.min.js"></script>
+
+<!-- Leaflet JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js"></script>
+
+<script>
+// Farm data
+const farmData = {
+    id: {{ farm.id }},
+    name: "{{ farm.name|escapejs }}",
+    latitude: {% if farm.latitude %}{{ farm.latitude }}{% else %}null{% endif %},
+    longitude: {% if farm.longitude %}{{ farm.longitude }}{% else %}null{% endif %},
+    planting_date: "{{ farm.planting_date|date:'Y-m-d' }}",
+    harvest_date: "{{ farm.expected_harvest_date|date:'Y-m-d' }}",
+    area_acres: {{ farm.area_acres }}
+};
+
+let farmLocationMap = null;
+let weatherChart = null;
+
+function toggleMonitoringForm() {
+    const form = document.getElementById('monitoring-form');
+    form.classList.toggle('hidden');
+}
+
+function toggleMapView() {
+    const container = document.getElementById('farm-map-container');
+    const toggleText = document.getElementById('map-toggle-text');
+    
+    if (container.classList.contains('hidden')) {
+        container.classList.remove('hidden');
+        toggleText.textContent = 'Hide Map';
+        if (!farmLocationMap) {
+            initializeFarmMap();
+        }
+    } else {
+        container.classList.add('hidden');
+        toggleText.textContent = 'Show Map';
+    }
+}
+
+function initializeFarmMap() {
+    if (!farmData.latitude || !farmData.longitude) return;
+    
+    farmLocationMap = L.map('farm-location-map').setView([farmData.latitude, farmData.longitude], 15);
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(farmLocationMap);
+
+    // Add farm marker
+    L.marker([farmData.latitude, farmData.longitude])
+        .addTo(farmLocationMap)
+        .bindPopup(`
+            <div class="p-2">
+                <h4 class="font-bold">${farmData.name}</h4>
+                <p class="text-sm">Area: ${farmData.area_acres} acres</p>
+            </div>
+        `);
+
+    // Add circle to represent farm area (approximate)
+    const radius = Math.sqrt(farmData.area_acres * 4046.86) / 2; // Convert acres to square meters, then to radius
+    L.circle([farmData.latitude, farmData.longitude], {
+        color: '#10b981',
+        fillColor: '#10b981',
+        fillOpacity: 0.2,
+        radius: radius
+    }).addTo(farmLocationMap);
+}
+
+function loadCurrentWeather() {
+    if (!farmData.latitude || !farmData.longitude) return;
+    
+    const weatherContent = document.getElementById('current-weather-content');
+    const button = event.target;
+    
+    button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Loading...';
+    button.disabled = true;
+    
+    // Mock weather data (replace with actual API call)
+    setTimeout(() => {
+        const mockWeather = {
+            temperature: Math.round(25 + Math.random() * 10),
+            humidity: Math.round(60 + Math.random() * 30),
+            wind_speed: (Math.random() * 5).toFixed(1),
+            description: 'Partly cloudy',
+            pressure: Math.round(1010 + Math.random() * 20),
+            visibility: Math.round(8 + Math.random() * 7)
+        };
+
+        weatherContent.innerHTML = `
+            <div class="space-y-3">
+                <div class="text-center">
+                    <div class="text-3xl font-bold text-blue-600 mb-2">${mockWeather.temperature}°C</div>
+                    <div class="text-sm text-gray-600 capitalize">${mockWeather.description}</div>
+                </div>
+                <div class="grid grid-cols-2 gap-3 text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Humidity:</span>
+                        <span class="font-medium">${mockWeather.humidity}%</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Wind:</span>
+                        <span class="font-medium">${mockWeather.wind_speed} m/s</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Pressure:</span>
+                        <span class="font-medium">${mockWeather.pressure} hPa</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Visibility:</span>
+                        <span class="font-medium">${mockWeather.visibility} km</span>
+                    </div>
+                </div>
+                <div class="text-xs text-gray-500 text-center pt-2 border-t">
+                    Last updated: ${new Date().toLocaleTimeString()}
+                </div>
+            </div>
+        `;
+        
+        weatherContent.classList.remove('hidden');
+        loadForecast();
+        
+        button.innerHTML = '<i class="fas fa-sync-alt mr-2"></i>Refresh Weather';
+        button.disabled = false;
+    }, 1000);
+}
+
+function loadForecast() {
+    const forecastContent = document.getElementById('forecast-content');
+    
+    // Mock 7-day forecast
+    const forecast = [];
+    for (let i = 1; i <= 7; i++) {
+        const date = new Date();
+        date.setDate(date.getDate() + i);
+        forecast.push({
+            day: date.toLocaleDateString('en-US', { weekday: 'short' }),
+            high: Math.round(23 + Math.random() * 12),
+            low: Math.round(15 + Math.random() * 8),
+            condition: ['Sunny', 'Cloudy', 'Rain', 'Partly Cloudy'][Math.floor(Math.random() * 4)]
+        });
+    }
+    
+    forecastContent.innerHTML = forecast.map(day => `
+        <div class="flex justify-between items-center py-2 border-b border-gray-100 last:border-b-0">
+            <span class="text-sm font-medium">${day.day}</span>
+            <div class="flex items-center space-x-2">
+                <span class="text-xs text-gray-500">${day.condition}</span>
+                <span class="text-sm font-medium">${day.high}°/${day.low}°</span>
+            </div>
+        </div>
+    `).join('');
+}
+
+function loadWeatherHistory() {
+    const button = event.target;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Loading...';
+    button.disabled = true;
+    
+    // Generate mock historical weather data
+    const days = 30;
+    const temperatures = [];
+    const humidity = [];
+    const labels = [];
+    
+    for (let i = days; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        labels.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+        
+        // Generate realistic weather patterns
+        const baseTemp = 25 + Math.sin((days - i) * 0.2) * 5;
+        temperatures.push(Math.round(baseTemp + (Math.random() - 0.5) * 6));
+        humidity.push(Math.round(65 + Math.sin((days - i) * 0.15) * 15 + (Math.random() - 0.5) * 10));
+    }
+    
+    setTimeout(() => {
+        if (weatherChart) {
+            weatherChart.destroy();
+        }
+        
+        const ctx = document.getElementById('weather-chart').getContext('2d');
+        weatherChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Temperature (°C)',
+                    data: temperatures,
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    tension: 0.4,
+                    yAxisID: 'y'
+                }, {
+                    label: 'Humidity (%)',
+                    data: humidity,
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    tension: 0.4,
+                    yAxisID: 'y1'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                scales: {
+                    x: {
+                        display: true,
+                        title: {
+                            display: true,
+                            text: 'Date'
+                        }
+                    },
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        title: {
+                            display: true,
+                            text: 'Temperature (°C)'
+                        },
+                        min: 15,
+                        max: 40
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        title: {
+                            display: true,
+                            text: 'Humidity (%)'
+                        },
+                        min: 30,
+                        max: 100,
+                        grid: {
+                            drawOnChartArea: false,
+                        },
+                    }
+                }
+            }
+        });
+        
+        button.innerHTML = '<i class="fas fa-chart-line mr-2"></i>Refresh Data';
+        button.disabled = false;
+    }, 1500);
+}
+
+function exportFarmData() {
+    const farmInfo = {
+        name: farmData.name,
+        coordinates: `${farmData.latitude}, ${farmData.longitude}`,
+        area: `${farmData.area_acres} acres`,
+        planting_date: farmData.planting_date,
+        harvest_date: farmData.harvest_date,
+        monitoring_records: {{ monitoring_records.count }},
+        export_date: new Date().toISOString()
+    };
+    
+    const dataStr = JSON.stringify(farmInfo, null, 2);
+    const dataBlob = new Blob([dataStr], {type: 'application/json'});
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${farmData.name.replace(/\s+/g, '_')}_farm_data.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+}
+
+function calculateFarmStats() {
+    const plantingDate = new Date(farmData.planting_date);
+    const harvestDate = new Date(farmData.harvest_date);
+    const today = new Date();
+    
+    // Calculate days since planting
+    const daysSincePlanting = Math.floor((today - plantingDate) / (1000 * 60 * 60 * 24));
+    
+    // Calculate days to harvest
+    const daysToHarvest = Math.floor((harvestDate - today) / (1000 * 60 * 60 * 24));
+    
+    // Calculate growth progress
+    const totalGrowthDays = Math.floor((harvestDate - plantingDate) / (1000 * 60 * 60 * 24));
+    const growthProgress = Math.min(100, Math.max(0, (daysSincePlanting / totalGrowthDays) * 100));
+    
+    document.getElementById('days-planted').textContent = daysSincePlanting >= 0 ? daysSincePlanting : 'Not yet planted';
+    document.getElementById('days-to-harvest').textContent = daysToHarvest > 0 ? daysToHarvest : (daysToHarvest === 0 ? 'Today!' : 'Overdue');
+    document.getElementById('growth-progress').textContent = `${Math.round(growthProgress)}%`;
+}
+
+// Auto-refresh weather every 15 minutes
+let weatherRefreshInterval;
+
+function startWeatherRefresh() {
+    weatherRefreshInterval = setInterval(() => {
+        const weatherContent = document.getElementById('current-weather-content');
+        if (!weatherContent.classList.contains('hidden')) {
+            loadCurrentWeather();
+        }
+    }, 900000); // 15 minutes
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    calculateFarmStats();
+    startWeatherRefresh();
+    
+    // Auto-load weather if coordinates are available
+    if (farmData.latitude && farmData.longitude) {
+        setTimeout(loadCurrentWeather, 1000);
+    }
+    
+    // Update stats every hour
+    setInterval(calculateFarmStats, 3600000);
+});
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', function() {
+    if (weatherRefreshInterval) {
+        clearInterval(weatherRefreshInterval);
+    }
+});
+</script>
+
+<style>
+.form-input, .form-select, .form-textarea {
+    appearance: none;
+    border-radius: 0.375rem;
+    border: 1px solid #d1d5db;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    width: 100%;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    border-color: #10b981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.leaflet-popup-content-wrapper {
+    border-radius: 8px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.leaflet-popup-content {
+    margin: 8px 12px;
+}
+
+#farm-location-map {
+    z-index: 1;
+}
+
+#weather-chart {
+    max-height: 300px;
+}
+
+@media (max-width: 768px) {
+    #farm-location-map {
+        height: 200px;
+    }
+    
+    #weather-chart {
+        max-height: 250px;
+    }
+}
+
+/* Custom scrollbar for forecast */
+#forecast-content {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+#forecast-content::-webkit-scrollbar {
+    width: 4px;
+}
+
+#forecast-content::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+
+#forecast-content::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 2px;
+}
+
+#forecast-content::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* Loading animations */
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.loading {
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* Weather status indicators */
+.weather-excellent { color: #10b981; }
+.weather-good { color: #3b82f6; }
+.weather-fair { color: #f59e0b; }
+.weather-poor { color: #ef4444; }
+
+/* Farm stats progress bar */
+.progress-bar {
+    background: linear-gradient(90deg, #10b981 0%, #34d399 100%);
+    height: 4px;
+    border-radius: 2px;
+    transition: width 0.3s ease-in-out;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,503 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Climate Monitor{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">Farm Dashboard</h1>
+        <p class="text-gray-600">Welcome back, {{ user.username }}! Here's your farm overview.</p>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-seedling text-2xl text-green-400"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Total Farms</dt>
+                            <dd class="text-3xl font-semibold text-gray-900">{{ total_farms }}</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-chart-area text-2xl text-blue-600"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Total Area</dt>
+                            <dd class="text-3xl font-semibold text-gray-900">{{ total_area }} acres</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-cloud-sun text-2xl text-yellow-400"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Weather Status</dt>
+                            <dd class="text-lg font-semibold text-gray-900">Monitoring</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-map-marked-alt text-2xl text-purple-600"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Locations</dt>
+                            <dd class="text-lg font-semibold text-gray-900">
+                                <button onclick="toggleMapView()" class="text-purple-600 hover:text-purple-800">
+                                    View Map
+                                </button>
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Map View Toggle -->
+    <div id="map-container" class="bg-white shadow rounded-lg mb-8 hidden">
+        <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+            <h2 class="text-lg font-semibold text-gray-900">Farm Locations</h2>
+            <button onclick="toggleMapView()" class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="p-6">
+            <div id="farms-map" class="h-96 w-full border border-gray-300 rounded-md"></div>
+            <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="map-legend">
+                <!-- Legend will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="bg-white shadow rounded-lg mb-8">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900">Quick Actions</h2>
+        </div>
+        <div class="p-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <a href="{% url 'farms:farm_create' %}" class="flex items-center justify-center px-4 py-3 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 transition">
+                    <i class="fas fa-plus mr-2"></i>Add New Farm
+                </a>
+                <a href="{% url 'weather:dashboard' %}" class="flex items-center justify-center px-4 py-3 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition">
+                    <i class="fas fa-cloud-sun mr-2"></i>Check Weather
+                </a>
+                <a href="{% url 'damage_reports:report_create' %}" class="flex items-center justify-center px-4 py-3 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>Report Damage
+                </a>
+                <a href="{% url 'farms:farm_list' %}" class="flex items-center justify-center px-4 py-3 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition">
+                    <i class="fas fa-list mr-2"></i>View All Farms
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Weather Overview -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+        <div class="lg:col-span-2">
+            <!-- Recent Farms -->
+            {% if farms %}
+            <div class="bg-white shadow rounded-lg">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h2 class="text-lg font-semibold text-gray-900">Your Farms</h2>
+                </div>
+                <div class="divide-y divide-gray-200">
+                    {% for farm in farms %}
+                    <div class="px-6 py-4">
+                        <div class="flex items-center justify-between">
+                            <div class="flex-grow">
+                                <h3 class="text-lg font-medium text-gray-900">{{ farm.name }}</h3>
+                                <p class="text-sm text-gray-600">{{ farm.location }} • {{ farm.crop_type|capfirst }} • {{ farm.area_acres }} acres</p>
+                                <p class="text-xs text-gray-500">Planted: {{ farm.planting_date }}</p>
+                                {% if farm.latitude and farm.longitude %}
+                                <button onclick="showFarmOnMap({{ farm.latitude }}, {{ farm.longitude }}, '{{ farm.name|escapejs }}')" 
+                                        class="text-xs text-purple-600 hover:text-purple-800 mt-1">
+                                    <i class="fas fa-map-marker-alt mr-1"></i>View on Map
+                                </button>
+                                {% endif %}
+                            </div>
+                            <div class="flex space-x-2 ml-4">
+                                {% if farm.latitude and farm.longitude %}
+                                <button onclick="loadFarmWeather({{ farm.latitude }}, {{ farm.longitude }}, '{{ farm.name|escapejs }}')" 
+                                        class="text-yellow-400 hover:text-yellow-800" title="Check Weather">
+                                    <i class="fas fa-cloud-sun"></i>
+                                </button>
+                                {% endif %}
+                                <a href="{% url 'farms:farm_detail' farm.id %}" class="text-green-400 hover:text-green-800" title="View Details">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'farms:farm_edit' farm.id %}" class="text-blue-400 hover:text-blue-800" title="Edit Farm">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% else %}
+            <div class="text-center py-12 bg-white shadow rounded-lg">
+                <i class="fas fa-seedling text-6xl text-gray-300 mb-4"></i>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">No farms yet</h3>
+                <p class="text-gray-600 mb-4">Get started by adding your first farm</p>
+                <a href="{% url 'farms:farm_create' %}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700">
+                    <i class="fas fa-plus mr-2"></i>Add Your First Farm
+                </a>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Weather Sidebar -->
+        <div class="space-y-6">
+            <div class="bg-white shadow rounded-lg p-6" id="weather-widget">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Quick Weather Check</h3>
+                <div id="weather-content" class="text-center">
+                    <p class="text-gray-500 mb-4">Select a farm to check weather</p>
+                    <button onclick="getCurrentLocationWeather()" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                        <i class="fas fa-location-arrow mr-2"></i>Use Current Location
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-white shadow rounded-lg p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Recent Activities</h3>
+                <div class="space-y-3">
+                    <div class="flex items-center text-sm">
+                        <div class="w-2 h-2 bg-green-400 rounded-full mr-3"></div>
+                        <span class="text-gray-600">System monitoring active</span>
+                    </div>
+                    <div class="flex items-center text-sm">
+                        <div class="w-2 h-2 bg-blue-400 rounded-full mr-3"></div>
+                        <span class="text-gray-600">Weather data updated</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css">
+
+<!-- Leaflet JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js"></script>
+
+<script>
+let farmsMap = null;
+let mapVisible = false;
+
+// Farm data from Django template
+const farmsData = [
+    {% for farm in farms %}
+    {% if farm.latitude and farm.longitude %}
+    {
+        id: {{ farm.id }},
+        name: "{{ farm.name|escapejs }}",
+        location: "{{ farm.location|escapejs }}",
+        crop_type: "{{ farm.crop_type|escapejs }}",
+        area: {{ farm.area_acres }},
+        lat: {{ farm.latitude }},
+        lng: {{ farm.longitude }},
+        planting_date: "{{ farm.planting_date }}",
+        harvest_date: "{{ farm.expected_harvest_date }}"
+    },
+    {% endif %}
+    {% endfor %}
+];
+
+function toggleMapView() {
+    const mapContainer = document.getElementById('map-container');
+    mapVisible = !mapVisible;
+    
+    if (mapVisible) {
+        mapContainer.classList.remove('hidden');
+        if (!farmsMap) {
+            initializeFarmsMap();
+        }
+    } else {
+        mapContainer.classList.add('hidden');
+    }
+}
+
+function initializeFarmsMap() {
+    // Initialize map
+    farmsMap = L.map('farms-map').setView([23.6850, 90.3563], 7);
+    
+    // Add OpenStreetMap tiles
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(farmsMap);
+
+    // Color mapping for crop types
+    const cropColors = {
+        'rice': '#10b981',
+        'wheat': '#f59e0b',
+        'corn': '#eab308',
+        'potato': '#8b5cf6',
+        'tomato': '#ef4444',
+        'onion': '#6366f1',
+        'other': '#6b7280'
+    };
+
+    // Add farm markers
+    const markers = [];
+    farmsData.forEach(farm => {
+        const marker = L.circleMarker([farm.lat, farm.lng], {
+            color: cropColors[farm.crop_type] || '#6b7280',
+            fillColor: cropColors[farm.crop_type] || '#6b7280',
+            fillOpacity: 0.7,
+            radius: Math.max(8, Math.min(20, farm.area / 2))
+        }).addTo(farmsMap);
+
+        marker.bindPopup(`
+            <div class="p-2 min-w-48">
+                <h4 class="font-bold text-gray-900 mb-2">${farm.name}</h4>
+                <div class="space-y-1 text-sm">
+                    <p><span class="text-gray-600">Location:</span> ${farm.location}</p>
+                    <p><span class="text-gray-600">Crop:</span> ${farm.crop_type.charAt(0).toUpperCase() + farm.crop_type.slice(1)}</p>
+                    <p><span class="text-gray-600">Area:</span> ${farm.area} acres</p>
+                    <p><span class="text-gray-600">Planted:</span> ${farm.planting_date}</p>
+                </div>
+                <div class="mt-3 space-x-2">
+                    <a href="/farms/${farm.id}/" class="inline-block px-2 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700">
+                        View Details
+                    </a>
+                    <button onclick="loadFarmWeather(${farm.lat}, ${farm.lng}, '${farm.name}')" 
+                            class="inline-block px-2 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700">
+                        Check Weather
+                    </button>
+                </div>
+            </div>
+        `);
+
+        markers.push(marker);
+    });
+
+    // Create legend
+    createMapLegend(cropColors);
+
+    // Fit map to show all markers
+    if (markers.length > 0) {
+        const group = new L.featureGroup(markers);
+        farmsMap.fitBounds(group.getBounds().pad(0.1));
+    }
+}
+
+function createMapLegend(cropColors) {
+    const legend = document.getElementById('map-legend');
+    const uniqueCrops = [...new Set(farmsData.map(farm => farm.crop_type))];
+    
+    legend.innerHTML = uniqueCrops.map(crop => `
+        <div class="flex items-center space-x-2 text-sm">
+            <div class="w-4 h-4 rounded-full" style="background-color: ${cropColors[crop]}"></div>
+            <span class="capitalize">${crop}</span>
+            <span class="text-gray-500">(${farmsData.filter(f => f.crop_type === crop).length})</span>
+        </div>
+    `).join('');
+}
+
+function showFarmOnMap(lat, lng, farmName) {
+    if (!mapVisible) {
+        toggleMapView();
+        setTimeout(() => {
+            farmsMap.setView([lat, lng], 15);
+            L.popup()
+                .setLatLng([lat, lng])
+                .setContent(`<div class="text-center p-2"><h4 class="font-bold">${farmName}</h4></div>`)
+                .openOn(farmsMap);
+        }, 500);
+    } else {
+        farmsMap.setView([lat, lng], 15);
+        L.popup()
+            .setLatLng([lat, lng])
+            .setContent(`<div class="text-center p-2"><h4 class="font-bold">${farmName}</h4></div>`)
+            .openOn(farmsMap);
+    }
+}
+
+function loadFarmWeather(lat, lng, farmName) {
+    const weatherContent = document.getElementById('weather-content');
+    
+    weatherContent.innerHTML = `
+        <div class="text-center">
+            <i class="fas fa-spinner fa-spin text-2xl text-blue-600 mb-2"></i>
+            <p class="text-sm text-gray-600">Loading weather for ${farmName}...</p>
+        </div>
+    `;
+
+    // Using OpenWeatherMap API (you'll need to replace YOUR_API_KEY with actual key)
+    // For demo purposes, using a mock weather service
+    fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lng}&appid=YOUR_API_KEY&units=metric`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Weather service unavailable');
+            }
+            return response.json();
+        })
+        .then(data => {
+            weatherContent.innerHTML = `
+                <div class="text-center">
+                    <h4 class="font-semibold text-gray-900 mb-3">${farmName}</h4>
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Temperature:</span>
+                            <span class="font-medium text-2xl text-blue-600">${Math.round(data.main.temp)}°C</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Feels like:</span>
+                            <span class="font-medium">${Math.round(data.main.feels_like)}°C</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Humidity:</span>
+                            <span class="font-medium">${data.main.humidity}%</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Wind:</span>
+                            <span class="font-medium">${data.wind.speed} m/s</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Condition:</span>
+                            <span class="font-medium capitalize">${data.weather[0].description}</span>
+                        </div>
+                    </div>
+                    <div class="mt-3 pt-3 border-t border-gray-200">
+                        <p class="text-xs text-gray-500">Last updated: ${new Date().toLocaleTimeString()}</p>
+                    </div>
+                </div>
+            `;
+        })
+        .catch(error => {
+            // Fallback with mock data for demo
+            weatherContent.innerHTML = `
+                <div class="text-center">
+                    <h4 class="font-semibold text-gray-900 mb-3">${farmName}</h4>
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Temperature:</span>
+                            <span class="font-medium text-2xl text-blue-600">${Math.round(25 + Math.random() * 10)}°C</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Humidity:</span>
+                            <span class="font-medium">${Math.round(60 + Math.random() * 30)}%</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Wind:</span>
+                            <span class="font-medium">${(Math.random() * 5).toFixed(1)} m/s</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Condition:</span>
+                            <span class="font-medium">Partly cloudy</span>
+                        </div>
+                    </div>
+                    <div class="mt-3 pt-3 border-t border-gray-200">
+                        <p class="text-xs text-gray-500">Demo data - Last updated: ${new Date().toLocaleTimeString()}</p>
+                        <p class="text-xs text-orange-500 mt-1">Configure weather API for live data</p>
+                    </div>
+                </div>
+            `;
+        });
+}
+
+function getCurrentLocationWeather() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            position => {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                loadFarmWeather(lat, lng, 'Current Location');
+            },
+            error => {
+                document.getElementById('weather-content').innerHTML = `
+                    <div class="text-center text-red-500">
+                        <i class="fas fa-exclamation-triangle mb-2"></i>
+                        <p class="text-sm">Unable to access location</p>
+                    </div>
+                `;
+            }
+        );
+    } else {
+        document.getElementById('weather-content').innerHTML = `
+            <div class="text-center text-red-500">
+                <i class="fas fa-exclamation-triangle mb-2"></i>
+                <p class="text-sm">Geolocation not supported</p>
+            </div>
+        `;
+    }
+}
+
+// Auto-refresh weather data every 10 minutes
+setInterval(() => {
+    const weatherWidget = document.getElementById('weather-widget');
+    if (weatherWidget.querySelector('.text-2xl.text-blue-600')) {
+        // Re-load weather if currently showing data
+        const lastFarm = weatherWidget.dataset.lastFarm;
+        if (lastFarm) {
+            const farmData = farmsData.find(f => f.name === lastFarm);
+            if (farmData) {
+                loadFarmWeather(farmData.lat, farmData.lng, farmData.name);
+            }
+        }
+    }
+}, 600000); // 10 minutes
+
+// Set up weather widget to remember last loaded farm
+document.addEventListener('DOMContentLoaded', function() {
+    const weatherWidget = document.getElementById('weather-widget');
+    
+    // Override loadFarmWeather to store last farm
+    const originalLoadFarmWeather = window.loadFarmWeather;
+    window.loadFarmWeather = function(lat, lng, farmName) {
+        weatherWidget.dataset.lastFarm = farmName;
+        originalLoadFarmWeather(lat, lng, farmName);
+    };
+});
+</script>
+
+<style>
+.leaflet-popup-content-wrapper {
+    border-radius: 8px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.leaflet-popup-content {
+    margin: 8px 12px;
+}
+
+#farms-map {
+    z-index: 1;
+}
+
+@media (max-width: 1024px) {
+    #farms-map {
+        height: 300px;
+    }
+}
+</style>
+{% endblock %}

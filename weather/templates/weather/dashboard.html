@@ -1,0 +1,213 @@
+{% extends 'base.html' %}
+
+{% block title %}Weather Dashboard - Climate Monitor{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="flex justify-between items-center mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Weather Dashboard</h1>
+            <p class="text-gray-600">Real-time weather data for your farms</p>
+        </div>
+        <a href="{% url 'weather:alerts' %}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700">
+            <i class="fas fa-exclamation-triangle mr-2"></i>View Alerts
+        </a>
+    </div>
+
+    <!-- Weather Alerts -->
+    {% if alerts %}
+    <div class="mb-8">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">Active Alerts</h2>
+        <div class="space-y-4">
+            {% for alert in alerts %}
+            <div class="bg-red-50 border-l-4 border-red-400 p-4">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-exclamation-triangle text-red-400"></i>
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="text-sm font-medium text-red-800">{{ alert.title }}</h3>
+                        <p class="text-sm text-red-700 mt-1">{{ alert.description }}</p>
+                        <p class="text-xs text-red-600 mt-2">{{ alert.location }} • {{ alert.severity|capfirst }} severity</p>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Farm Weather Data -->
+    {% if weather_data %}
+    <div class="mb-8">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">Your Farm Weather</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for data in weather_data %}
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="px-6 py-4">
+                    <h3 class="text-lg font-semibold text-gray-900">{{ data.farm.name }}</h3>
+                    <p class="text-sm text-gray-600">{{ data.farm.location }}</p>
+                    
+                    <div class="mt-4 space-y-2">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-500">Temperature:</span>
+                            <span class="text-2xl font-bold text-blue-600">{{ data.weather.temperature }}°C</span>
+                        </div>
+                        
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-500">Humidity:</span>
+                            <span class="font-medium">{{ data.weather.humidity }}%</span>
+                        </div>
+                        
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-500">Wind Speed:</span>
+                            <span class="font-medium">{{ data.weather.wind_speed }} m/s</span>
+                        </div>
+                        
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-500">Condition:</span>
+                            <span class="font-medium capitalize">{{ data.weather.description }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="px-6 py-3 bg-gray-50">
+                    <button onclick="getDetailedWeather({{ data.farm.latitude }}, {{ data.farm.longitude }}, '{{ data.farm.name }}')" 
+                            class="text-green-600 hover:text-green-800 font-medium">
+                        View Forecast
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Recent Weather Data -->
+    {% if recent_data %}
+    <div class="bg-white shadow rounded-lg">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900">Recent Weather Records</h2>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Temperature</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Humidity</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Condition</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Recorded</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for record in recent_data %}
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ record.location }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ record.temperature }}°C</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ record.humidity }}%</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">{{ record.description }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ record.recorded_at|date:"M d, Y H:i" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if not weather_data and not recent_data %}
+    <div class="text-center py-12">
+        <i class="fas fa-cloud-sun text-6xl text-gray-300 mb-4"></i>
+        <h3 class="text-lg font-medium text-gray-900 mb-2">No weather data available</h3>
+        <p class="text-gray-600 mb-4">Add farms with coordinates to get weather data</p>
+        <a href="{% url 'farms:farm_create' %}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700">
+            <i class="fas fa-plus mr-2"></i>Add Farm
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Weather Forecast Modal -->
+<div id="weatherModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg max-w-2xl w-full max-h-screen overflow-y-auto">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <div class="flex justify-between items-center">
+                    <h3 id="modalTitle" class="text-lg font-semibold text-gray-900">Weather Forecast</h3>
+                    <button onclick="closeWeatherModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            <div id="forecastContent" class="p-6">
+                <!-- Forecast content will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function getDetailedWeather(lat, lon, farmName) {
+    document.getElementById('modalTitle').textContent = `Weather Forecast - ${farmName}`;
+    document.getElementById('forecastContent').innerHTML = '<div class="text-center py-4"><i class="fas fa-spinner fa-spin text-2xl text-gray-400"></i><p class="text-gray-500 mt-2">Loading forecast...</p></div>';
+    document.getElementById('weatherModal').classList.remove('hidden');
+    
+    fetch(`{% url 'weather:weather_api' %}?lat=${lat}&lon=${lon}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.current && data.forecast) {
+                let content = '<div class="space-y-6">';
+                
+                // Current weather
+                content += `
+                    <div class="bg-blue-50 p-4 rounded-lg">
+                        <h4 class="font-semibold text-blue-900 mb-2">Current Weather</h4>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div><span class="text-blue-700">Temperature:</span> <strong>${data.current.temperature}°C</strong></div>
+                            <div><span class="text-blue-700">Humidity:</span> <strong>${data.current.humidity}%</strong></div>
+                            <div><span class="text-blue-700">Wind Speed:</span> <strong>${data.current.wind_speed} m/s</strong></div>
+                            <div><span class="text-blue-700">Condition:</span> <strong class="capitalize">${data.current.description}</strong></div>
+                        </div>
+                    </div>
+                `;
+                
+                // Forecast
+                if (data.forecast.length > 0) {
+                    content += '<div><h4 class="font-semibold text-gray-900 mb-3">5-Day Forecast</h4><div class="space-y-2">';
+                    data.forecast.slice(0, 8).forEach(item => {
+                        content += `
+                            <div class="flex justify-between items-center p-2 bg-gray-50 rounded">
+                                <span class="text-sm">${new Date(item.datetime).toLocaleDateString()} ${new Date(item.datetime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                                <div class="text-right">
+                                    <span class="font-medium">${item.temperature}°C</span>
+                                    <span class="text-sm text-gray-500 capitalize block">${item.description}</span>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    content += '</div></div>';
+                }
+                
+                content += '</div>';
+                document.getElementById('forecastContent').innerHTML = content;
+            } else {
+                document.getElementById('forecastContent').innerHTML = '<div class="text-center py-4 text-red-500">Failed to load weather data</div>';
+            }
+        })
+        .catch(error => {
+            document.getElementById('forecastContent').innerHTML = '<div class="text-center py-4 text-red-500">Error loading weather data</div>';
+        });
+}
+
+function closeWeatherModal() {
+    document.getElementById('weatherModal').classList.add('hidden');
+}
+
+// Close modal when clicking outside
+document.getElementById('weatherModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeWeatherModal();
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,257 @@
+{% extends 'base.html' %}
+
+{% block title %}Climate Monitor - Agriculture Weather System{% endblock %}
+
+{% block content %}
+<div class="bg-gradient-to-br from-green-500 to-blue-600 text-white">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 py-16">
+    <!-- Hero Section -->
+    <div class="text-center mb-12">
+      <h1 class="text-4xl md:text-6xl font-bold mb-6">Climate Monitor</h1>
+      <p class="text-xl md:text-2xl max-w-3xl mx-auto opacity-90">
+        Real-Time Climate Monitoring & Damage Control System
+      </p>
+    </div>
+
+    <!-- Chat Bot Section -->
+    <div class="bg-white/10 backdrop-blur-sm rounded-xl p-8 max-w-4xl mx-auto border border-white/20 mb-8">
+      <div class="flex flex-col items-center">
+        <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mb-4">
+          <i class="fas fa-robot text-white text-2xl"></i>
+        </div>
+        <h3 class="text-2xl font-bold mb-3">🌾 Ask Your AI Agriculture Assistant</h3>
+        <p class="text-lg opacity-90 mb-6 text-center">
+          Get instant farming advice, weather insights, and crop recommendations
+        </p>
+        
+        <div class="w-full bg-white rounded-xl shadow-sm">
+          <div class="h-48 overflow-y-auto p-4 bg-gray-50 rounded-t-xl" id="mainChatMessages">
+            <div class="flex items-start space-x-3">
+              <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-seedling text-white text-sm"></i>
+              </div>
+              <div class="bg-white rounded-lg p-3 shadow-sm max-w-xs border">
+                <p class="text-sm text-gray-700">Assalamu Alaikum! Ask me about farming in Bangladesh 🌱</p>
+              </div>
+            </div>
+          </div>
+          
+          <div class="p-4 bg-white rounded-b-xl border-t border-gray-100">
+            <div class="flex space-x-3">
+              <input 
+                type="text" 
+                id="mainChatInput" 
+                placeholder="Ask about rice cultivation, weather, irrigation..." 
+                class="flex-1 px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900"
+                maxlength="200"
+              >
+              <button 
+                id="mainChatSend" 
+                class="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+              >
+                <i class="fas fa-paper-plane"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Quick Questions -->
+        <div class="mt-6 flex flex-wrap justify-center gap-3">
+          <button class="quick-question bg-white/20 text-white px-4 py-2 rounded-lg text-sm hover:bg-white/30 transition-colors backdrop-blur-sm border border-white/20" data-question="How to grow rice in monsoon season?">
+            Rice cultivation
+          </button>
+          <button class="quick-question bg-white/20 text-white px-4 py-2 rounded-lg text-sm hover:bg-white/30 transition-colors backdrop-blur-sm border border-white/20" data-question="Best fertilizer for wheat in Bangladesh?">
+            Fertilizer advice
+          </button>
+          <button class="quick-question bg-white/20 text-white px-4 py-2 rounded-lg text-sm hover:bg-white/30 transition-colors backdrop-blur-sm border border-white/20" data-question="How to prevent rice diseases?">
+            Disease prevention
+          </button>
+          <button class="quick-question bg-white/20 text-white px-4 py-2 rounded-lg text-sm hover:bg-white/30 transition-colors backdrop-blur-sm border border-white/20" data-question="Irrigation tips for dry season farming?">
+            Irrigation tips
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Call to Action -->
+    <div class="text-center">
+      {% if user.is_authenticated %}
+        <a href="{% url 'farms:dashboard' %}" class="inline-block bg-white text-green-600 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-50 transition-colors shadow-sm">
+          <i class="fas fa-tachometer-alt mr-2"></i>Go to Dashboard
+        </a>
+      {% else %}
+        <div class="space-x-4">
+          <a href="{% url 'users:register' %}" class="inline-block bg-white text-green-600 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-50 transition-colors shadow-sm">
+            <i class="fas fa-user-plus mr-2"></i>Get Started Free
+          </a>
+          <a href="{% url 'users:login' %}" class="inline-block border-2 border-white text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-white hover:text-green-600 transition-colors">
+            <i class="fas fa-sign-in-alt mr-2"></i>Login
+          </a>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Features Section -->
+<div class="py-16 bg-gray-50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6">
+    <div class="text-center mb-12">
+      <h2 class="text-3xl font-bold text-gray-900 mb-4">Everything You Need in One Place</h2>
+      <p class="text-lg text-gray-600">Complete agricultural monitoring solution for Bangladesh farmers</p>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-8">
+      <div class="text-center p-8 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow border border-gray-100">
+        <div class="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-6">
+          <i class="fas fa-cloud-sun text-yellow-400 text-2xl"></i>
+        </div>
+        <h3 class="text-xl font-semibold mb-3 text-gray-900">Weather Monitoring</h3>
+        <p class="text-gray-600 leading-relaxed">Real-time weather data, forecasts, and alerts to help you make informed farming decisions.</p>
+      </div>
+
+      <div class="text-center p-8 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow border border-gray-100">
+        <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+          <i class="fas fa-seedling text-green-600 text-2xl"></i>
+        </div>
+        <h3 class="text-xl font-semibold mb-3 text-gray-900">Crop Management</h3>
+        <p class="text-gray-600 leading-relaxed">Track your crops, manage farm locations, and monitor growth stages with ease.</p>
+      </div>
+
+      <div class="text-center p-8 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow border border-gray-100">
+        <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+          <i class="fas fa-exclamation-triangle text-red-600 text-2xl"></i>
+        </div>
+        <h3 class="text-xl font-semibold mb-3 text-gray-900">Damage Reports</h3>
+        <p class="text-gray-600 leading-relaxed">Quick damage assessment and reporting system for weather-related crop damage.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Chat functionality
+  const chatMessages = document.getElementById('mainChatMessages');
+  const chatInput = document.getElementById('mainChatInput');
+  const chatSend = document.getElementById('mainChatSend');
+  
+  function addMessage(content, isUser = false) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `flex items-start space-x-3 mb-4 ${isUser ? 'justify-end' : ''}`;
+    
+    if (isUser) {
+      messageDiv.innerHTML = `
+        <div class="bg-green-500 text-white rounded-lg p-3 shadow-sm max-w-xs order-2">
+          <p class="text-sm">${content}</p>
+        </div>
+        <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0 order-1">
+          <i class="fas fa-user text-white text-sm"></i>
+        </div>
+      `;
+    } else {
+      messageDiv.innerHTML = `
+        <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+          <i class="fas fa-seedling text-white text-sm"></i>
+        </div>
+        <div class="bg-white rounded-lg p-3 shadow-sm max-w-xs border">
+          <p class="text-sm text-gray-700">${content}</p>
+        </div>
+      `;
+    }
+    
+    chatMessages.appendChild(messageDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+
+  function addLoadingMessage() {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'flex items-start space-x-3 mb-4';
+    messageDiv.id = 'loadingMessage';
+    
+    messageDiv.innerHTML = `
+      <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+        <i class="fas fa-seedling text-white text-sm"></i>
+      </div>
+      <div class="bg-white rounded-lg p-3 shadow-sm max-w-xs border">
+        <div class="flex items-center space-x-2">
+          <div class="flex space-x-1">
+            <div class="w-2 h-2 bg-gray-400 rounded-full animate-pulse"></div>
+            <div class="w-2 h-2 bg-gray-400 rounded-full animate-pulse" style="animation-delay: 0.2s;"></div>
+            <div class="w-2 h-2 bg-gray-400 rounded-full animate-pulse" style="animation-delay: 0.4s;"></div>
+          </div>
+          <span class="text-sm text-gray-500">Typing...</span>
+        </div>
+      </div>
+    `;
+    
+    chatMessages.appendChild(messageDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+
+  function removeLoadingMessage() {
+    const loadingMessage = document.getElementById('loadingMessage');
+    if (loadingMessage) {
+      loadingMessage.remove();
+    }
+  }
+
+  async function sendMessage() {
+    const message = chatInput.value.trim();
+    if (!message) return;
+
+    addMessage(message, true);
+    chatInput.value = '';
+    chatSend.disabled = true;
+    chatSend.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    
+    // Add loading animation
+    addLoadingMessage();
+
+    try {
+      const response = await fetch('/chat/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({ message })
+      });
+      
+      const data = await response.json();
+      
+      // Remove loading message
+      removeLoadingMessage();
+      
+      addMessage(data.success ? data.response : 'Sorry, I encountered an error. Please try again.');
+    } catch (error) {
+      removeLoadingMessage();
+      addMessage('Connection error. Please check your internet and try again.');
+    }
+
+    chatSend.disabled = false;
+    chatSend.innerHTML = '<i class="fas fa-paper-plane"></i>';
+  }
+
+  chatSend.addEventListener('click', sendMessage);
+  chatInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') sendMessage();
+  });
+
+  // Quick questions
+  document.querySelectorAll('.quick-question').forEach(btn => {
+    btn.addEventListener('click', () => {
+      chatInput.value = btn.dataset.question;
+      sendMessage();
+    });
+  });
+
+  // CSRF helper
+  function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+  }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - Climate Monitor{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">{{ title }}</h1>
+        <p class="text-gray-600">Provide details about the crop damage</p>
+    </div>
+
+    <div class="bg-white shadow rounded-lg">
+        <form method="post" class="space-y-6 p-6">
+            {% csrf_token %}
+            
+            <div>
+                <label for="{{ form.farm.id_for_label }}" class="block text-sm font-medium text-gray-700">Affected Farm</label>
+                {{ form.farm }}
+                {% if form.farm.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.farm.errors|first }}</p>
+                {% endif %}
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="{{ form.damage_type.id_for_label }}" class="block text-sm font-medium text-gray-700">Damage Type</label>
+                    {{ form.damage_type }}
+                    {% if form.damage_type.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.damage_type.errors|first }}</p>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="{{ form.severity.id_for_label }}" class="block text-sm font-medium text-gray-700">Severity Level</label>
+                    {{ form.severity }}
+                    {% if form.severity.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.severity.errors|first }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div>
+                <label for="{{ form.title.id_for_label }}" class="block text-sm font-medium text-gray-700">Report Title</label>
+                {{ form.title }}
+                {% if form.title.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.title.errors|first }}</p>
+                {% endif %}
+            </div>
+            
+            <div>
+                <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-gray-700">Description</label>
+                {{ form.description }}
+                <p class="mt-1 text-xs text-gray-500">Describe the damage in detail, including what caused it and its extent</p>
+                {% if form.description.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.description.errors|first }}</p>
+                {% endif %}
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="{{ form.estimated_loss_percentage.id_for_label }}" class="block text-sm font-medium text-gray-700">Estimated Loss (%)</label>
+                    {{ form.estimated_loss_percentage }}
+                    <p class="mt-1 text-xs text-gray-500">Percentage of crop affected by damage</p>
+                    {% if form.estimated_loss_percentage.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.estimated_loss_percentage.errors|first }}</p>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="{{ form.estimated_financial_loss.id_for_label }}" class="block text-sm font-medium text-gray-700">Financial Loss (BDT)</label>
+                    {{ form.estimated_financial_loss }}
+                    <p class="mt-1 text-xs text-gray-500">Optional: Estimated monetary loss</p>
+                    {% if form.estimated_financial_loss.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.estimated_financial_loss.errors|first }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div>
+                <label for="{{ form.date_occurred.id_for_label }}" class="block text-sm font-medium text-gray-700">Date Damage Occurred</label>
+                {{ form.date_occurred }}
+                {% if form.date_occurred.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.date_occurred.errors|first }}</p>
+                {% endif %}
+            </div>
+            
+            <div class="flex justify-end space-x-3">
+                <a href="{% url 'damage_reports:report_list' %}" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                    Cancel
+                </a>
+                <button type="submit" class="px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-red-600 hover:bg-red-700">
+                    {% if report %}Update Report{% else %}Submit Report{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+input[type="text"], input[type="number"], input[type="date"], select, textarea {
+    appearance: none;
+    border-radius: 0.375rem;
+    border: 1px solid #d1d5db;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    width: 100%;
+}
+input:focus, select:focus, textarea:focus {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    border-color: #dc2626;
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+}
+</style>
+{% endblock %}
